@@ -1,10 +1,18 @@
 import 'dotenv/config'
-import app from './src/app.js'
-import Peer from './src/peer/index.js'
 
-const PORT = process.env.PORT || 8081
+import Client from './src/model/client/client.js'
 
-const peer = new Peer()
-const server = app.listen(PORT)
+if (process.argv.length != 5) {
+    console.log('Usage: node index.js <username> <password> <port>')
+    process.exit(1)
+}
 
-export { server, peer }
+// todo: missing arg validation
+
+const username = process.argv[2]
+const password = process.argv[3]
+const port = process.argv[4]
+
+const client = new Client(username, port)
+
+export { client }

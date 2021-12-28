@@ -1,12 +1,15 @@
-import { peer } from '../../index.js'
+import { client } from '../../index.js'
 
 export async function status(req, res) {
+    const peer = client.peer
     const status = peer.getStatus()
 
     return res.status(200).json({ "message": status })
 }
 
 export async function start(req, res) {
+    const peer = client.peer
+
     // todo: missing validation
     const { inviteToken } = req.body
 
@@ -24,6 +27,8 @@ export async function stop(req, res) {
 }
 
 export async function subscribe(req, res) {
+    const peer = client.peer
+
     // todo: missing validation
     const { channel } = req.body
 
@@ -38,6 +43,8 @@ export async function unsubscribe(req, res) {
 }
 
 export async function post(req, res) {
+    const peer = client.peer
+
     // todo: missing validation
     const { message } = req.body
 

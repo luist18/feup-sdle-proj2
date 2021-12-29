@@ -1,3 +1,4 @@
+import PeerId from 'peer-id'
 import { client } from '../../index.js'
 
 export async function status(req, res) {
@@ -28,9 +29,20 @@ export async function stop(req, res) {
 
 export async function subscribe(req, res) {
     const peer = client.peer
+    
+    if (peer.status !== "online")
+        return res.status(404).json({ "message": "Peer is offline" })
 
-    // todo: missing validation
     const { channel } = req.body
+   
+    // todo: fix validation
+    /*try {
+        await peer.peer.peerRouting.findPeer(PeerId.createFromB58String(channel))
+    } catch (err) {
+        console.log(err)
+        console.log("Channel could not be established: Peer not found")
+        return res.status(404).json({ "message": "Peer not found" })
+    }*/
 
     await peer.subscribe(channel)
 

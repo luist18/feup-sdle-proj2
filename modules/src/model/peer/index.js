@@ -1,3 +1,4 @@
+import PeerId from 'peer-id'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 
@@ -13,6 +14,11 @@ class Peer {
   }
 
   async start(multiaddr) {
+    if (this.status === 'online'){
+      console.log("Peer is already online")
+      return
+    }
+    
     this.peer = await boot()
 
     await this.peer.start()
@@ -43,6 +49,11 @@ class Peer {
     this.peer.pubsub.subscribe(channel)
 
     console.log(`subscribed to channel ${channel}`)
+  }
+
+  async unsubscribe(channel) {
+    // todo: missing implementation
+    throw new Error('Not implemented')
   }
 
   async send(data) {

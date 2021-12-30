@@ -5,8 +5,10 @@ import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import boot from './boot.js'
 
 class Peer {
-  constructor() {
+  constructor(username) {
     this.status = 'offline'
+    this.username = username
+    this.subscribedUsers = [] // todo: optimize
   }
 
   getStatus() {
@@ -25,7 +27,7 @@ class Peer {
 
     this.status = 'online'
 
-    // happens when peer is invited to the network
+    // peer is invited to the network
     if (multiaddr)
       await this.connect(multiaddr)
 
@@ -36,35 +38,38 @@ class Peer {
   async connect(multiaddr) {
     const conn = await this.peer.dial(multiaddr)
 
-    console.log(`connected to ${conn.remotePeer.toB58String()}`)
+    console.log(`Connected to ${conn.remotePeer.toB58String()}`)
   }
 
-  async subscribe(channel) {
-    this.peer.pubsub.on(channel, (msg) => {
+  async subscribe(username) {
+    if (this.subscribedUsers.includes(username))
+      return
+
+    this.peer.pubsub.on(username, (msg) => {
       // missing handler
       // idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
-      console.log(`received: ${uint8ArrayToString(msg.data)}`)
+      console.log(`User ${username} posted ${uint8ArrayToString(msg.data)}`)
     })
 
-    this.peer.pubsub.subscribe(channel)
-
-    console.log(`subscribed to channel ${channel}`)
+    this.peer.pubsub.subscribe(username)
+    this.subscribedUsers.push(username)
+    this.subscribedUsers.forEach((item) => console.log(item))
+    
+    console.log(`User ${this.username} followed user ${username}`)
   }
 
-  async unsubscribe(channel) {
-    //this.peer.pubsub.removeListener(channel, this.handler)
-    this.peer.pubsub.unsubscribe(channel)
+  async unsubscribe(username) {
+    // this.peer.pubsub.removeListener(username, this.handler)
+    this.peer.pubsub.unsubscribe(username)
     
-    console.log(`unsubscribed from channel ${channel}`)
+    console.log(`User ${this.username} unfollowed user ${username}`)
   }
 
   async send(data) {
     // todo: think about this what should the channel be?
-    const channel = this.peer.peerId.toB58String()
+    await this.peer.pubsub.publish(this.username, uint8ArrayFromString(data))
 
-    await this.peer.pubsub.publish(channel, uint8ArrayFromString(data))
-
-    console.log(`sent message ${data} to channel ${channel}`)
+    console.log(`User ${this.username} published message ${data}`)
   }
 }
 

@@ -52,8 +52,10 @@ class Peer {
   }
 
   async unsubscribe(channel) {
-    // todo: missing implementation
-    throw new Error('Not implemented')
+    //this.peer.pubsub.removeListener(channel, this.handler)
+    this.peer.pubsub.unsubscribe(channel)
+    
+    console.log(`unsubscribed from channel ${channel}`)
   }
 
   async send(data) {

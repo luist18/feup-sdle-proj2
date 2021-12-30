@@ -50,8 +50,17 @@ export async function subscribe(req, res) {
 }
 
 export async function unsubscribe(req, res) {
+    const peer = client.peer
+    
+    if (peer.status !== "online")
+        return res.status(404).json({ "message": "Peer is offline" })
+
+    const { channel } = req.body
+
     // todo: missing validation
-    throw new Error('Not implemented')
+    await peer.unsubscribe(channel)
+
+    return res.status(200).json({ "message": "Unsubscribed from channel" })
 }
 
 export async function post(req, res) {

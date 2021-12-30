@@ -31,7 +31,6 @@ export async function subscribe(req, res) {
     const peer = client.peer
     
     const { username } = req.body
-
    
     if (peer.status !== "online")
         return res.status(404).json({ "error": "You are not online" })
@@ -39,14 +38,7 @@ export async function subscribe(req, res) {
     if (username === undefined)
         return res.status(400).json({ "error": "Username not provided" })
 
-    // todo: fix validation
-    /*try {
-        await peer.peer.peerRouting.findPeer(PeerId.createFromB58String(username))
-    } catch (err) {
-        console.log(err)
-        console.log("Channel could not be established: Peer not found")
-        return res.status(404).json({ "message": "Peer not found" })
-    }*/
+    // todo: check if user is in the network (works if offline, doesn't work if inexistent)
 
     await peer.subscribe(username)
 

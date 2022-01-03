@@ -13,12 +13,12 @@ export default class Notices {
     }
 
     publishDbPost(username, publicKey, databaseId) {
-        console.log("sent post")
         this.#publish('/db/post', { username, publicKey, databaseId })
     }
 
     #publish(channel, object) {
         const message = new Message(object)
+        console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
         this.peer.peer.pubsub.publish(channel, uint8ArrayFromString(JSON.stringify(message)))
     }
 
@@ -28,7 +28,8 @@ export default class Notices {
     }
 
     #handleDbPost(msg) {
-        console.log("received post")
+        console.log("received /db/post")
+
         const message = JSON.parse(uint8ArrayToString(msg.data))
 
         // TODO accept IDs that are not the one exactly above

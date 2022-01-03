@@ -20,6 +20,10 @@ class Database {
         this.entries[username] = publicKey
         this.id++
     }
+
+    get(username) {
+        return this.entries[username]
+    }
 }
 
 export default Database

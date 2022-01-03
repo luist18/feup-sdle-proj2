@@ -14,6 +14,7 @@ class Auth {
     // creates new credentials
     createCredentials() {
         // copy pasted from https://stackoverflow.com/questions/8520973/how-to-create-a-pair-private-public-keys-using-node-js-crypto
+        // TODO: make this more secure (and understand it)
         const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
             modulusLength: 4096,
             publicKeyEncoding: {
@@ -22,9 +23,7 @@ class Auth {
             },
             privateKeyEncoding: {
                 type: 'pkcs8',
-                format: 'pem',
-                cipher: 'aes-256-cbc',
-                passphrase: 'top secret'
+                format: 'pem'
             }
         });
 
@@ -42,6 +41,11 @@ class Auth {
     // sets the database
     setDatabase(db) {
         this.db = db
+    }
+
+    updateKeys(username, privateKey) {
+        this.publicKey = this.db.get(username)
+        this.privateKey = privateKey
     }
 }
 

@@ -27,7 +27,7 @@ export async function start(req, res) {
                 return res.status(409).json({ "message": "username already exists" })
         }
         else
-            console.log("LOGIN") // TODO
+            await login(peer, privateKey)
     } else {
         // if the network is new, the user is also new, ignores the secret key
         peer.auth.createCredentials()
@@ -45,26 +45,50 @@ export async function start(req, res) {
     })
 }
 
+async function login(peer, privateKey) {
+    // TODO verify with persistence if the credentials are valid
+
+    // asks neighbors if the credentials are correct
+    const { bestNeighbor: bestNeighborId, bestReply: credentialsCorrect } = await peer.protocols.checkCredentials(client.name, privateKey)
+    if (!credentialsCorrect)
+        return false
+
+    // TODO additional measures (like ask to sign random string)
+
+    // TODO not get the database right away, but check persistence first
+    // and check the ID
+
+    // gets the database from the neighbor
+    const database = await peer.protocols.database(bestNeighborId)
+
+    // sets it as the current database
+    peer.auth.setDatabase(database)
+
+    peer.auth.updateKeys(client.name, privateKey)
+
+    return true
+}
+
 // creates a new user in the network
 async function createNewUser(peer) {
     // asks neighbors if the username already exists
     const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await peer.protocols.usernameExists(client.name)
     if (usernameAlreadyExists)
-    return false
-    
+        return false
+
     // gets the database from the neighbor
     const database = await peer.protocols.database(bestNeighborId)
-    
+
     // creates the credentials
     peer.auth.createCredentials()
     // TODO persistence
-    
+
     // adds the user to the database
     database.set(client.name, peer.auth.publicKey)
-    
+
     // sets it as the current database
     peer.auth.setDatabase(database)
-    
+
     // floods the new user to the network
     peer.notices.publishDbPost(client.name, peer.auth.publicKey, peer.auth.db.id)
 

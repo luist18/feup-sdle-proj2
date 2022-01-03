@@ -10,6 +10,7 @@ export default class Peer {
     this.status = 'offline'
 
     this.auth = new Auth()
+    
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
   }

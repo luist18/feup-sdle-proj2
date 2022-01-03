@@ -13,7 +13,7 @@ router.get("/database", database)
     /start
     body:
         [inviteToken]: string
-        [secretKey]: string
+        [privateKey]: string
     returns:
         200
  */

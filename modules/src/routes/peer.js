@@ -1,11 +1,21 @@
 import express from 'express'
 const router = express.Router()
 
-import { start, status, stop, subscribe, unsubscribe, post } from '../controller/peer.controller.js'
+import { start, status, stop, subscribe, unsubscribe, post, token } from '../controller/peer.controller.js'
 
 // todo: start/stop/subscribe/unsubscribe could be a put
 
 router.get("/status", status)
+router.get("/token", token)
+
+/*
+    /start
+    body:
+        [inviteToken]: string
+        [secretKey]: string
+    returns:
+        200
+ */
 router.post("/start", start)
 router.post("/stop", stop)
 router.post("/subscribe", subscribe)

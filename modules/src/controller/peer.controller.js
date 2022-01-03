@@ -47,14 +47,18 @@ export async function start(req, res) {
 // creates a new user in the network
 async function createNewUser(peer) {
     // asks neighbors if the username already exists
-    const usernameAlreadyExists = await peer.usernameExists(client.name)
+    const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await peer.protocols.usernameExists(client.name)
     if (usernameAlreadyExists)
         return false
-    // FIXME you're here
 
-    // crates the credentials
+    // gets the database from the neighbor
+    const database = await peer.protocols.database(bestNeighborId)
+
+    // creates the credentials
     peer.auth.createCredentials()
     // TODO persistence
+
+
 }
 
 export async function stop(req, res) {

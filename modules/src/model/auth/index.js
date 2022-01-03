@@ -38,6 +38,11 @@ class Auth {
 
         this.db.set(username, this.publicKey)
     }
+
+    // sets the database
+    setDatabase(db) {
+        this.db = db
+    }
 }
 
 export default Auth

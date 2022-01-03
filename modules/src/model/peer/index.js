@@ -2,6 +2,7 @@ import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import Auth from '../auth/index.js'
 import Protocols from './protocols.js'
+import Notices from './notices.js'
 import boot from './boot.js'
 
 export default class Peer {
@@ -10,6 +11,7 @@ export default class Peer {
 
     this.auth = new Auth()
     this.protocols = new Protocols(this)
+    this.notices = new Notices(this)
   }
 
   getStatus() {
@@ -30,18 +32,28 @@ export default class Peer {
 
     // happens when peer is invited to the network
     if (multiaddr)
-      await this.connect(multiaddr)
+      if (!await this.connect(multiaddr))
+        return false
 
     this.protocols.subscribeAll()
+    this.notices.subscribeAll()
 
     // prints this peer's addresses
     this.peer.multiaddrs.forEach((ma) => console.log(`${ma.toString()}/p2p/${this.peer.peerId.toB58String()}`))
+
+    return true
   }
 
   async connect(multiaddr) {
-    const conn = await this.peer.dial(multiaddr)
+    try {
+      const conn = await this.peer.dial(multiaddr)
+      console.log(`connected to ${conn.remotePeer.toB58String()}`)
+    } catch (e) {
+      // if the multiaddr is incorrect
+      return false
+    }
 
-    console.log(`connected to ${conn.remotePeer.toB58String()}`)
+    return true
   }
 
   async subscribe(channel) {

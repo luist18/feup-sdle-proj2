@@ -17,7 +17,8 @@ export async function start(req, res) {
     const isNewNetwork = inviteToken === undefined
 
     if (!isNewNetwork) {
-        await peer.start(inviteToken)
+        if (!await peer.start(inviteToken))
+            return res.status(400).json({ "message": "invalid token" })
 
         const isNewUser = privateKey === undefined
 
@@ -49,16 +50,25 @@ async function createNewUser(peer) {
     // asks neighbors if the username already exists
     const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await peer.protocols.usernameExists(client.name)
     if (usernameAlreadyExists)
-        return false
-
+    return false
+    
     // gets the database from the neighbor
     const database = await peer.protocols.database(bestNeighborId)
-
+    
     // creates the credentials
     peer.auth.createCredentials()
     // TODO persistence
+    
+    // adds the user to the database
+    database.set(client.name, peer.auth.publicKey)
+    
+    // sets it as the current database
+    peer.auth.setDatabase(database)
+    
+    // floods the new user to the network
+    peer.notices.publishDbPost(client.name, peer.auth.publicKey, peer.auth.db.id)
 
-
+    return true
 }
 
 export async function stop(req, res) {
@@ -101,4 +111,14 @@ export function token(req, res) {
     }
 
     return res.status(200).json({ "token": peer.token() })
+}
+
+export function database(req, res) {
+    const peer = client.peer
+
+    if (peer.status !== "online") {
+        return res.status(406).json({ "message": "Peer is not online" })
+    }
+
+    return res.status(200).json({ "database": peer.auth.db })
 }

@@ -2,6 +2,7 @@ import { pipe } from 'it-pipe'
 import Database from '../auth/database.js'
 import Message from '../message/index.js'
 
+// protocols are messages exchanged between single peers
 export default class Protocols {
     constructor(peer) {
         this.peer = peer
@@ -19,7 +20,6 @@ export default class Protocols {
     // sink: function that receives a Message
     // returns whatever sink returns
     async sendTo(dest, protocol, body, sink) {
-        console.log("bbbb", protocol)
         const { stream } = await this.peer.peer.dialProtocol(dest, protocol)
 
         return await this.send(stream, body, sink)
@@ -95,7 +95,6 @@ export default class Protocols {
             {},
             async (data) => {
                 const message = JSON.parse(data)
-                console.log(message)
 
                 const entries = message.data.entries
                 const id = message.data.id

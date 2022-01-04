@@ -35,17 +35,20 @@ export async function subscribe(req, res) {
     const { username } = req.body
 
     // Validation
-    if (peer.status === "offline")
-        return res.status(404).json({ "error": "You are offline" })
+    if (!peer.isOnline())
+      return res.status(401).json({ error: "You are offline" });
 
     if (username === undefined)
         return res.status(400).json({ "error": "Username not provided" })
 
     // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
-    await peer.subscribe(username)
+    const alreadySub = await peer.subscribe(username)
 
-    return res.status(200).json({ "message": "Followed user" })
+    if (alreadySub)
+        return res.status(200).json({ message: " Already followed user" })
+    else 
+        return res.status(201).json({ message: "Followed user" });
 }
 
 export async function unsubscribe(req, res) {
@@ -54,17 +57,20 @@ export async function unsubscribe(req, res) {
     const { username } = req.body
     
     // Validation
-    if (peer.status !== "online")
-        return res.status(404).json({ "error": "You are not online" })
+    if (!peer.isOnline())
+        return res.status(401).json({ "error": "You are offline" })
 
     if (username === undefined)
         return res.status(400).json({ "error": "Username not provided" })
     
     // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
-    await peer.unsubscribe(username)
+    const alreadyUnsub = await peer.unsubscribe(username);
 
-    return res.status(200).json({ "message": "Unfollowed user" })
+    if (alreadyUnsub)
+        return res.status(200).json({ message: "Unfollowed user" });
+    else 
+        return res.status(201).json({ message: "You didn't follow the user" });
 }
 
 export async function post(req, res) {

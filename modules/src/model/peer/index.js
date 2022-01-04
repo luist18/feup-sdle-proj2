@@ -6,18 +6,18 @@ import boot from './boot.js'
 
 class Peer {
   constructor(username) {
-    this.status = 'offline'
+    this.online = false
     this.username = username
     this.followedUsers = [] // TODO: optimize
   }
 
-  getStatus() {
-    return this.status
+  isOnline() {
+    return this.online
   }
 
   async start(multiaddr) {
     // Peer is already online
-    if (this.status === 'online'){
+    if (this.online){
       console.log("Peer is already online")
       return
     }
@@ -26,7 +26,7 @@ class Peer {
 
     await this.peer.start()
 
-    this.status = 'online'
+    this.online = true
 
     // Peer is invited to the network
     if (multiaddr)
@@ -46,7 +46,7 @@ class Peer {
   async subscribe(username) {
     // Assures idempotent subscribe
     if (this.followedUsers.includes(username))
-      return
+      return true
 
     // Adds listener
     this.peer.pubsub.on(username, (post) => {
@@ -62,16 +62,18 @@ class Peer {
     this.peer.pubsub.subscribe(username)
     
     console.log(`User ${this.username} followed user ${username}`)
+    return false
   }
 
   async unsubscribe(username) {
     // Verifies if user is subscribed to the user that he wants to unsubscribe
     if (!this.followedUsers.includes(username))
-      return
+      return true
 
     this.peer.pubsub.unsubscribe(username)
     
     console.log(`User ${this.username} unfollowed user ${username}`)
+    return false
   }
 
   async send(data) {

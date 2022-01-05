@@ -5,12 +5,17 @@ import Protocols from './protocols.js'
 import Notices from './notices.js'
 import boot from './boot.js'
 
+const PEER_STATUS = {
+  ONLINE: 'online',
+  OFFLINE: 'offline'
+}
+
 export default class Peer {
   constructor(username, port) {
     this.username = username
     this.port = port
 
-    this.status = 'offline'
+    this.status = Peer.STATUS.OFFLINE
 
     this.auth = new Auth()
 
@@ -18,13 +23,8 @@ export default class Peer {
     this.notices = new Notices(this)
   }
 
-  getStatus() {
-    return this.status
-  }
-
-  token() {
-    // TODO make token
-    return `${this.peer.multiaddrs[0].toString()}/p2p/${this.peer.peerId.toB58String()}`
+  static get STATUS() {
+    return PEER_STATUS
   }
 
   async start(multiaddr) {
@@ -32,7 +32,7 @@ export default class Peer {
 
     await this.peer.start()
 
-    this.status = 'online'
+    this.status = Peer.STATUS.ONLINE
 
     // happens when peer is invited to the network
     if (multiaddr) {
@@ -51,7 +51,7 @@ export default class Peer {
   async stop() {
     await this.peer.stop()
 
-    this.status = 'offline'
+    this.status = Peer.STATUS.OFFLINE
   }
 
   async connect(multiaddr) {
@@ -64,6 +64,11 @@ export default class Peer {
     }
 
     return true
+  }
+
+  token() {
+    // TODO make token
+    return `${this.peer.multiaddrs[0].toString()}/p2p/${this.peer.peerId.toB58String()}`
   }
 
   async subscribe(channel) {

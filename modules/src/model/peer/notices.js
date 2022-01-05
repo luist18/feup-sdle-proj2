@@ -19,12 +19,12 @@ export default class Notices {
   publish(channel, object) {
     const message = new Message(object)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
-    this.peer.peer.pubsub.publish(channel, uint8ArrayFromString(JSON.stringify(message)))
+    this.peer.libp2p.pubsub.publish(channel, uint8ArrayFromString(JSON.stringify(message)))
   }
 
   subscribeNotice(channel, handler) {
-    this.peer.peer.pubsub.on(channel, handler.bind(this))
-    this.peer.peer.pubsub.subscribe(channel)
+    this.peer.libp2p.pubsub.on(channel, handler.bind(this))
+    this.peer.libp2p.pubsub.subscribe(channel)
   }
 
   handleDbPost(msg) {

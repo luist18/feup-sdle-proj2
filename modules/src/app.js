@@ -19,10 +19,6 @@ function app(username, port) {
 
   const peer = new Peer(username, port)
 
-  app.use((req, res, next) => {
-    req.peer = peer
-  })
-
   app.set('peer', peer)
 
   return app

@@ -1,6 +1,6 @@
 export async function status(req, res) {
   const peer = req.app.get('peer')
-  const status = peer.getStatus()
+  const status = peer.status
 
   return res.status(200).json({ message: status })
 }
@@ -64,6 +64,7 @@ async function login(peer, username, privateKey) {
 
 // creates a new user in the network
 async function createNewUser(peer, username) {
+  console.log(username)
   // asks neighbors if the username already exists
   const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await peer.protocols.usernameExists(username)
   if (usernameAlreadyExists) { return false }

@@ -25,7 +25,7 @@ export default class Protocols {
   // returns whatever sink returns
   async sendTo(dest, protocol, body, sink) {
     console.log(`dialing protocol: ${protocol}`)
-    const { stream } = await this.peer.peer.dialProtocol(dest, protocol)
+    const { stream } = await this.peer.libp2p.dialProtocol(dest, protocol)
 
     return await this.send(stream, body, sink)
   }
@@ -71,6 +71,7 @@ export default class Protocols {
     // gets the neighbors
     const neighbors = this.peer.neighbors()
 
+    console.log(neighbors)
     let bestDatabaseId = -1
     let bestReply = false
     let bestNeighbor = null
@@ -150,7 +151,7 @@ export default class Protocols {
   }
 
   subscribe(protocol, handler) {
-    this.peer.peer.handle(protocol, ({ stream }) => {
+    this.peer.libp2p.handle(protocol, ({ stream }) => {
       console.log(`received protocol: ${protocol}`)
       handler({ stream }).bind(this)()
     })

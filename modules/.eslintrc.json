@@ -19,6 +19,15 @@
         "space-before-function-paren": [
             "error",
             "never"
+        ],
+        "no-console": [
+            "warn",
+            {
+                "allow": [
+                    "warn",
+                    "error"
+                ]
+            }
         ]
     }
 }

@@ -33,6 +33,7 @@ export default class Peer {
   constructor(username, port) {
     this.username = username
     this.port = port
+    this.followedUsers = []
 
     this.libp2p = null
 
@@ -65,6 +66,15 @@ export default class Peer {
    */
   id() {
     return this._libp2p().peerId
+  }
+
+  /**
+   * Checks whether the peer is online or not.
+   *
+   * @returns {boolean} true if the peer is online, false otherwise
+   */
+  isOnline() {
+    return this.status === Peer.STATUS.ONLINE
   }
 
   /**
@@ -154,24 +164,40 @@ export default class Peer {
     return [...peersMap.values()].map((peer) => peer.id)
   }
 
-  async subscribe(channel) {
-    this._libp2p().pubsub.on(channel, (msg) => {
-      // missing handler
-      // idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
-      console.log(`received: ${uint8ArrayToString(msg.data)}`)
+  async subscribe(username) {
+    // Assures idempotent subscribe
+    if (this.followedUsers.includes(username)) { return false }
+
+    // Adds listener
+    this._libp2p().pubsub.on(username, (post) => {
+      // TODO: save post
+      // Idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
+      console.log(`User ${username} posted ${uint8ArrayToString(post.data)}`)
     })
 
-    this._libp2p().pubsub.subscribe(channel)
+    // Adds to followed to users
+    this.followedUsers.push(username)
 
-    console.log(`subscribed to channel ${channel}`)
+    this._libp2p().pubsub.subscribe(username)
+
+    console.log(`User ${this.username} followed user ${username}`)
+    return true
+  }
+
+  async unsubscribe(username) {
+    // Verifies if user is subscribed to the user that he wants to unsubscribe
+    if (!this.followedUsers.includes(username)) { return false }
+
+    this._libp2p().pubsub.unsubscribe(username)
+
+    console.log(`User ${this.username} unfollowed user ${username}`)
+    return true
   }
 
   async send(data) {
-    // todo: think about this what should the channel be?
-    const channel = this._libp2p().peerId.toB58String()
+    // TODO: think about this what should the channel be?
+    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(data))
 
-    await this._libp2p().pubsub.publish(channel, uint8ArrayFromString(data))
-
-    console.log(`sent message ${data} to channel ${channel}`)
+    console.log(`User ${this.username} published message ${data}`)
   }
 }

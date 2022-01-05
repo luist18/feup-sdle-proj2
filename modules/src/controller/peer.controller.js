@@ -39,6 +39,11 @@ export async function start(req, res) {
   })
 }
 
+export async function stop(req, res) {
+  // TODO: missing validation
+  throw new Error('Not implemented')
+}
+
 async function login(peer, username, privateKey) {
   // TODO verify with persistence if the credentials are valid
 
@@ -88,32 +93,44 @@ async function createNewUser(peer, username) {
   return true
 }
 
-export async function stop(req, res) {
-  // todo: missing validation
-  throw new Error('Not implemented')
-}
-
 export async function subscribe(req, res) {
   const peer = req.app.get('peer')
 
-  // todo: missing validation
-  const { channel } = req.body
+  // Subscription through usernames
+  const { username } = req.body
 
-  await peer.subscribe(channel)
+  // Validation
+  if (!peer.isOnline()) { return res.status(401).json({ error: 'You are offline' }) }
 
-  return res.status(200).json({ message: 'Subscribed to channel' })
+  if (username === undefined) { return res.status(400).json({ error: 'Username not provided' }) }
+
+  // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
+
+  if (!await peer.subscribe(username)) { return res.status(200).json({ message: ' Already followed user' }) } else { return res.status(201).json({ message: 'Followed user' }) }
 }
 
 export async function unsubscribe(req, res) {
-  // todo: missing validation
-  throw new Error('Not implemented')
+  const peer = req.app.get('peer')
+
+  const { username } = req.body
+
+  // Validation
+  if (!peer.isOnline()) { return res.status(401).json({ error: 'You are offline' }) }
+
+  if (username === undefined) { return res.status(400).json({ error: 'Username not provided' }) }
+
+  // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
+
+  if (await peer.unsubscribe(username)) { return res.status(200).json({ message: 'Unfollowed user' }) } else { return res.status(201).json({ message: "You didn't follow the user" }) }
 }
 
 export async function post(req, res) {
   const peer = req.app.get('peer')
 
-  // todo: missing validation
   const { message } = req.body
+
+  // Validation
+  if (message === undefined) { return res.status(400).json({ error: 'Message not provided' }) }
 
   await peer.send(message)
 

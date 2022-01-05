@@ -6,11 +6,14 @@ import Notices from './notices.js'
 import boot from './boot.js'
 
 export default class Peer {
-  constructor() {
+  constructor(username, port) {
+    this.username = username
+    this.port = port
+
     this.status = 'offline'
 
     this.auth = new Auth()
-    
+
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
   }
@@ -32,9 +35,9 @@ export default class Peer {
     this.status = 'online'
 
     // happens when peer is invited to the network
-    if (multiaddr)
-      if (!await this.connect(multiaddr))
-        return false
+    if (multiaddr) {
+      if (!await this.connect(multiaddr)) { return false }
+    }
 
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
@@ -43,6 +46,12 @@ export default class Peer {
     this.peer.multiaddrs.forEach((ma) => console.log(`${ma.toString()}/p2p/${this.peer.peerId.toB58String()}`))
 
     return true
+  }
+
+  async stop() {
+    await this.peer.stop()
+
+    this.status = 'offline'
   }
 
   async connect(multiaddr) {
@@ -78,7 +87,6 @@ export default class Peer {
     console.log(`sent message ${data} to channel ${channel}`)
   }
 
-  // returns the IDs of the known peers
   neighbors() {
     const peersMap = this.peer.peerStore.peers
     const peers = [...peersMap.values()]

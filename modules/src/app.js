@@ -4,16 +4,28 @@ import cors from 'cors'
 import morgan from 'morgan'
 
 import peerRoute from './routes/peer.js'
+import Peer from './model/peer/index.js'
 
-const app = express()
+function app(username, port) {
+  const app = express()
 
-app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
-app.use(cookieParser())
-app.use(morgan("dev"))
+  app.use(cors())
+  app.use(express.json())
+  app.use(express.urlencoded({ extended: false }))
+  app.use(cookieParser())
+  app.use(morgan('dev'))
 
-app.use("/peer", peerRoute)
+  app.use('/peer', peerRoute)
+
+  const peer = new Peer(username, port)
+
+  app.use((req, res, next) => {
+    req.peer = peer
+  })
+
+  app.set('peer', peer)
+
+  return app
+}
 
 export default app
-

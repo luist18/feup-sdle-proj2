@@ -1,10 +1,10 @@
 import 'dotenv/config'
 
-import Client from './src/model/client/client.js'
+import app from './src/app.js'
 
-if (process.argv.length != 4) {
-    console.log('Usage: node index.js <port> <username>')
-    process.exit(1)
+if (process.argv.length !== 4) {
+  console.log('Usage: node index.js <port> <username>')
+  process.exit(1)
 }
 
 // todo: missing arg validation
@@ -12,6 +12,4 @@ if (process.argv.length != 4) {
 const port = process.argv[2]
 const username = process.argv[3]
 
-const client = new Client(username, port)
-
-export { client }
+app(username, port).listen(port)

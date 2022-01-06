@@ -47,7 +47,7 @@ describe('auth test', () => {
       })
   }, 30000)
 
-  test('check if all apps have information about other apps', async() => {
+  test('check if indirectly connected apps have information about each other', async() => {
     await new Promise((resolve) => {
       setTimeout(() => {
         expect(apps[2].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[1].get('peer').id().id)

@@ -33,7 +33,7 @@ class Auth {
 
   // creates new database
   createDatabase(username) {
-    this.db = Database.fresh()
+    this.db = new Database()
 
     this.db.set(username, this.publicKey)
   }

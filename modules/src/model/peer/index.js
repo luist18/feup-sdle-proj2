@@ -86,6 +86,8 @@ export default class Peer {
    * @returns {Promise<boolean>} a promise that resolves when the peer is online
    */
   async start(multiaddr) {
+    if (this.isOnline()) { return false }
+
     this.libp2p = await libp2p.create({
       addresses: {
         listen: [`/ip4/0.0.0.0/tcp/${this.port}`]
@@ -112,7 +114,9 @@ export default class Peer {
 
     // happens when peer is invited to the network
     if (multiaddr) {
-      if (!await this.connect(multiaddr)) { return false }
+      if (!await this.connect(multiaddr)) {
+        throw new Error('Could not connect to the peer')
+      }
     }
 
     this.protocols.subscribeAll()
@@ -147,6 +151,55 @@ export default class Peer {
       // if the multiaddr is incorrect
       return false
     }
+  }
+
+  async login(privateKey) {
+    // TODO verify with persistence if the credentials are valid
+
+    // asks neighbors if the credentials are correct
+    const { bestNeighbor: bestNeighborId, bestReply: credentialsCorrect } = await this.protocols.checkCredentials(this.username, privateKey)
+
+    if (!credentialsCorrect) { return false }
+
+    // TODO additional measures (like ask to sign random string)
+
+    // TODO not get the database right away, but check persistence first
+    // and check the ID
+
+    // gets the database from the neighbor
+    const database = await this.protocols.database(bestNeighborId)
+
+    // sets it as the current database
+    this.auth.setDatabase(database)
+
+    this.auth.updateKeys(this.username, privateKey)
+
+    return true
+  }
+
+  // creates a new user in the network
+  async createCredentials() {
+    // asks neighbors if the username already exists
+    const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await this.protocols.usernameExists(this.username)
+    if (usernameAlreadyExists) { return false }
+
+    // gets the database from the neighbor
+    const database = await this.protocols.database(bestNeighborId)
+
+    // creates the credentials
+    this.auth.createCredentials()
+    // TODO persistence
+
+    // adds the user to the database
+    database.set(this.username, this.auth.publicKey)
+
+    // sets it as the current database
+    this.auth.setDatabase(database)
+
+    // floods the new user to the network
+    this.notices.publishDbPost(this.username, this.auth.publicKey, this.auth.db.id)
+
+    return true
   }
 
   token() {

@@ -71,7 +71,6 @@ export default class Protocols {
     // gets the neighbors
     const neighbors = this.peer.neighbors()
 
-    console.log(neighbors)
     let bestDatabaseId = -1
     let bestReply = false
     let bestNeighbor = null

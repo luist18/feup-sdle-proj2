@@ -7,11 +7,6 @@ class Database {
     this.entries = entries
   }
 
-  // creates a new empty database
-  static fresh() {
-    return new Database()
-  }
-
   usernameExists(username) {
     return this.entries[username] !== undefined
   }

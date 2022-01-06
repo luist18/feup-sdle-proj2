@@ -3,13 +3,14 @@ const router = express.Router()
 
 import { start, status, stop, subscribe, unsubscribe, post } from '../controller/peer.controller.js'
 
-// todo: start/stop/subscribe/unsubscribe could be a put
+router.delete("/stop", stop)
+router.delete("/unsubscribe", unsubscribe)
 
 router.get("/status", status)
-router.post("/start", start)
-router.post("/stop", stop)
-router.post("/subscribe", subscribe)
-router.post("/unsubscribe", unsubscribe)
+
 router.post("/post", post)
+
+router.put("/start", start)
+router.put("/subscribe", subscribe)
 
 export default router

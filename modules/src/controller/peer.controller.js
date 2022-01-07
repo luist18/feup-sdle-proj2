@@ -1,8 +1,9 @@
 export async function status(req, res) {
-  const peer = req.app.get('peer')
-  const status = peer.status
+  const peer = req.app.get('peer')  
 
-  return res.status(200).json({ message: status })
+  console.log(peer.messages)
+
+  return res.status(200).json({ message: peer.status })
 }
 
 export async function start(req, res) {

@@ -43,10 +43,12 @@ export default class Peer {
 
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
+
+    this.messages = new Map()
   }
 
   /**
-   * Gets the libpo2p instance.
+   * Gets the libp2p instance.
    *
    * @throws {Error} if the libp2p instance is not initialized,
    * this happens when the peer is offline.
@@ -223,8 +225,16 @@ export default class Peer {
 
     // Adds listener
     this._libp2p().pubsub.on(username, (post) => {
-      // TODO: save post
-      // Idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
+      
+      if(!this.messages.has(username)){
+        this.messages.set(username, new Array())
+      }
+
+      var messagesFromUser = this.messages.get(username)
+      messagesFromUser.push(uint8ArrayToString(post.data))
+
+      this.messages.set(username, messagesFromUser)
+
       console.log(`User ${username} posted ${uint8ArrayToString(post.data)}`)
     })
 

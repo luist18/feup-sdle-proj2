@@ -76,11 +76,6 @@ export async function subscribe(req, res) {
   // Subscription through usernames
   const { username } = req.body
 
-  // Validation
-  if (!peer.isOnline()) {
-    return res.status(401).json({ error: 'You are offline' })
-  }
-
   if (username === undefined) {
     return res.status(400).json({ error: 'Username not provided' })
   }
@@ -102,11 +97,6 @@ export async function unsubscribe(req, res) {
   const peer = req.app.get('peer')
 
   const { username } = req.body
-
-  // Validation
-  if (!peer.isOnline()) {
-    return res.status(401).json({ error: 'You are offline' })
-  }
 
   if (username === undefined) {
     return res.status(400).json({ error: 'Username not provided' })
@@ -139,19 +129,11 @@ export async function post(req, res) {
 export function token(req, res) {
   const peer = req.app.get('peer')
 
-  if (!peer.isOnline()) {
-    return res.status(406).json({ message: 'Peer is not online' })
-  }
-
   return res.status(200).json({ token: peer.token() })
 }
 
 export function database(req, res) {
   const peer = req.app.get('peer')
-
-  if (!peer.isOnline()) {
-    return res.status(406).json({ message: 'Peer is not online' })
-  }
 
   return res.status(200).json({
     database: {

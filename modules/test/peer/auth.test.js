@@ -50,16 +50,35 @@ describe('auth test', () => {
   test('check if indirectly connected apps have information about each other', async() => {
     await new Promise((resolve) => {
       setTimeout(() => {
-        expect(apps[2].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[1].get('peer').id().id)
-        expect(apps[1].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[2].get('peer').id().id)
+        expect(
+          apps[2]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[1].get('peer').id().id)
+        expect(
+          apps[1]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[2].get('peer').id().id)
         resolve()
       }, 10000)
     })
   }, 5 * 15000)
 
   test('turn off apps 🛑', (done) => {
-    Promise.all(apps.map((app) => app.get('peer').stop())).then(() => {
-      done()
-    })
-  }, 3 * 1000)
+    Promise.all(
+      apps
+        .map((app) =>
+          request(app)
+            .delete('/peer/stop')
+            .then((req) => {
+              expect(req.status).toBe(200)
+              expect(req.body).toHaveProperty('message')
+              expect(req.body.message).toBe('peer stopped')
+            })
+        )
+    ).then(() => done())
+  }, 30 * 1000)
 })

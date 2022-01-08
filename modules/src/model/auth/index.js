@@ -3,12 +3,60 @@ import Database from './database.js'
 
 // holds a peer's auth database as well as its own auth information
 // holds functions to deal with these
-class Auth {
+class AuthManager {
   constructor() {
-    this.db = null
+    this._db = null
 
     this.publicKey = null
     this.privateKey = null
+  }
+
+  /**
+   * Gets the database id.
+   *
+   * @returns {number} the database id
+   */
+  getDatabaseId() {
+    return this._db.id
+  }
+
+  /**
+   * Gets the database entries.
+   *
+   * @returns {Object} the database entries
+   */
+  getDatabaseEntries() {
+    return this._db.entries
+  }
+
+  /**
+   * Checks if the username exists in the database.
+   *
+   * @param {string} username the username to lookup
+   * @returns {boolean} whether the username exists in the database
+   */
+  hasUsername(username) {
+    return this._db.has(username)
+  }
+
+  /**
+   * Gets the public key associated with a username.
+   *
+   * @param {string} username the username to lookup
+   * @returns the username's public key
+   */
+  getKeyByUsermame(username) {
+    return this._db.get(username)
+  }
+
+  /**
+   * Sets a database entry.
+   *
+   * @param {string} username the username
+   * @param {string} publicKey the public key
+   */
+  setEntry(username, publicKey) {
+    this._db.set(username, publicKey)
   }
 
   // creates new credentials
@@ -33,20 +81,20 @@ class Auth {
 
   // creates new database
   createDatabase(username) {
-    this.db = new Database()
+    this._db = new Database()
 
-    this.db.set(username, this.publicKey)
+    this._db.set(username, this.publicKey)
   }
 
   // sets the database
   setDatabase(db) {
-    this.db = db
+    this._db = db
   }
 
   updateKeys(username, privateKey) {
-    this.publicKey = this.db.get(username)
+    this.publicKey = this._db.get(username)
     this.privateKey = privateKey
   }
 }
 
-export default Auth
+export default AuthManager

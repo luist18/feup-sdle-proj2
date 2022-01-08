@@ -21,7 +21,7 @@ describe('auth test', () => {
           })
       )
     ).then(() => done())
-  }, 30000)
+  }, 10 * 1000)
 
   test('connect app 2 and app 3 to app 1', (done) => {
     request(apps[0])
@@ -45,7 +45,7 @@ describe('auth test', () => {
           )
         ).then(() => done())
       })
-  }, 30000)
+  }, 20 * 1000)
 
   test('check if indirectly connected apps have information about each other', async() => {
     await new Promise((resolve) => {
@@ -65,7 +65,7 @@ describe('auth test', () => {
         resolve()
       }, 10000)
     })
-  }, 50000)
+  }, 5 * 15000)
 
   test('turn off apps 🛑', (done) => {
     Promise.all(
@@ -80,5 +80,5 @@ describe('auth test', () => {
             })
         )
     ).then(() => done())
-  }, 30000)
+  }, 30 * 1000)
 })

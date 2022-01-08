@@ -6,7 +6,7 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-import Auth from '../auth/index.js'
+import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
 
@@ -38,7 +38,7 @@ export default class Peer {
 
     this.status = Peer.STATUS.OFFLINE
 
-    this.auth = new Auth()
+    this.authManager = new AuthManager()
 
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
@@ -180,9 +180,9 @@ export default class Peer {
     const database = await this.protocols.database(bestNeighborId)
 
     // sets it as the current database
-    this.auth.setDatabase(database)
+    this.authManager.setDatabase(database)
 
-    this.auth.updateKeys(this.username, privateKey)
+    this.authManager.updateKeys(this.username, privateKey)
 
     return true
   }
@@ -200,20 +200,20 @@ export default class Peer {
     const database = await this.protocols.database(bestNeighborId)
 
     // creates the credentials
-    this.auth.createCredentials()
+    this.authManager.createCredentials()
     // TODO persistence
 
     // adds the user to the database
-    database.set(this.username, this.auth.publicKey)
+    database.set(this.username, this.authManager.publicKey)
 
     // sets it as the current database
-    this.auth.setDatabase(database)
+    this.authManager.setDatabase(database)
 
     // floods the new user to the network
     this.notices.publishDbPost(
       this.username,
-      this.auth.publicKey,
-      this.auth.db.id
+      this.authManager.publicKey,
+      this.authManager.getDatabaseId()
     )
 
     return true
@@ -235,6 +235,14 @@ export default class Peer {
   }
 
   async subscribe(username) {
+    if (username === this.username) {
+      throw new Error('You cannot subscribe to yourself')
+    }
+
+    if (!this.authManager.hasUsername(username)) {
+      throw new Error('User does not exist')
+    }
+
     // Assures idempotent subscribe
     if (this.followedUsers.includes(username)) {
       return false

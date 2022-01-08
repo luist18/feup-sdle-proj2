@@ -7,7 +7,7 @@ class Database {
     this.entries = entries
   }
 
-  usernameExists(username) {
+  has(username) {
     return this.entries[username] !== undefined
   }
 

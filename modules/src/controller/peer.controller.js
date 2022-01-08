@@ -19,8 +19,8 @@ export async function start(req, res) {
 
   if (!inviteToken) {
     // if the network is new, the user is also new, ignores the secret key
-    peer.auth.createCredentials()
-    peer.auth.createDatabase(username)
+    peer.authManager.createCredentials()
+    peer.authManager.createDatabase(username)
 
     await peer.start()
   } else {
@@ -52,8 +52,8 @@ export async function start(req, res) {
   return res.status(201).json({
     message: 'Peer started',
     auth: {
-      publicKey: peer.auth.publicKey,
-      privateKey: peer.auth.privateKey
+      publicKey: peer.authManager.publicKey,
+      privateKey: peer.authManager.privateKey
     }
   })
 }
@@ -87,10 +87,14 @@ export async function subscribe(req, res) {
 
   // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
-  if (!(await peer.subscribe(username))) {
-    return res.status(200).json({ message: ' Already followed user' })
-  } else {
-    return res.status(201).json({ message: 'Followed user' })
+  try {
+    if (!(await peer.subscribe(username))) {
+      return res.status(200).json({ message: 'Already followed user' })
+    } else {
+      return res.status(201).json({ message: 'Followed user' })
+    }
+  } catch (err) {
+    return res.status(400).json({ message: err.message })
   }
 }
 
@@ -149,5 +153,10 @@ export function database(req, res) {
     return res.status(406).json({ message: 'Peer is not online' })
   }
 
-  return res.status(200).json({ database: peer.auth.db })
+  return res.status(200).json({
+    database: {
+      id: peer.authManager.getDabataseId(),
+      entries: peer.authManager.getDatabaseEntries()
+    }
+  })
 }

@@ -1,15 +1,14 @@
-import libp2p from 'libp2p'
-import kadDHT from 'libp2p-kad-dht'
-import TCP from 'libp2p-tcp'
-import Mplex from 'libp2p-mplex'
-import Gossipsub from 'libp2p-gossipsub'
 import { NOISE } from '@chainsafe/libp2p-noise'
+import libp2p from 'libp2p'
+import Gossipsub from 'libp2p-gossipsub'
+import kadDHT from 'libp2p-kad-dht'
+import Mplex from 'libp2p-mplex'
+import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-
 import Auth from '../auth/index.js'
-import Protocols from './protocols.js'
 import Notices from './notices.js'
+import Protocols from './protocols.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -79,7 +78,7 @@ export default class Peer {
 
   /**
    * Starts the peer. This method will start the libp2p instance and
-   * comunication components of the peer. If this method recieves an
+   * communication components of the peer. If this method receives an
    * argument then it will try to connect the peer to the given multiaddr.
    *
    * @param {PeerId|Multiaddr|string} multiaddr the identifier of the invitation peer
@@ -90,7 +89,7 @@ export default class Peer {
 
     this.libp2p = await libp2p.create({
       addresses: {
-        listen: [`/ip4/0.0.0.0/tcp/${this.port}`]
+        listen: ['/ip4/0.0.0.0/tcp/0']
       },
       modules: {
         transport: [TCP],

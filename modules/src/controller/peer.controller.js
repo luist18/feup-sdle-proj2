@@ -14,26 +14,33 @@ export async function start(req, res) {
 
   const username = peer.username
 
-  // todo: missing validation
+  // TODO missing validation
   const { inviteToken, privateKey } = req.body
 
-  // TODO get InviteToken from storage with persistence
-  const isNewNetwork = inviteToken === undefined
-
-  if (!isNewNetwork) {
-    if (!await peer.start(inviteToken)) { return res.status(400).json({ message: 'invalid token' }) }
-
-    const isNewUser = privateKey === undefined
-
-    if (isNewUser) {
-      if (!await peer.createCredentials()) { return res.status(409).json({ message: 'username already exists' }) }
-    } else { await peer.login(privateKey) }
-  } else {
+  if (!inviteToken) {
     // if the network is new, the user is also new, ignores the secret key
     peer.auth.createCredentials()
     peer.auth.createDatabase(username)
 
     await peer.start()
+  } else {
+    let started = false
+    try {
+      // tries to join the network with the token
+      started = await peer.start(inviteToken)
+    } catch (err) {
+      // peer.start raises exception if the token is invalid
+      started = false
+    }
+
+    if (!started) { return res.status(400).json({ message: 'invalid token' }) }
+
+    if (privateKey) {
+      // if the user inserts its private key, then it is supposed to login
+      if (!await peer.login(privateKey)) { return res.status(401).json({ message: 'invalid credentials' }) } // if the credentials (username + pk) are incorrect
+    } else {
+      if (!await peer.createCredentials()) { return res.status(409).json({ message: 'username already exists' }) }
+    }
   }
 
   return res.status(201).json({

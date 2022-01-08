@@ -33,13 +33,19 @@ export async function start(req, res) {
       started = false
     }
 
-    if (!started) { return res.status(400).json({ message: 'invalid token' }) }
+    if (!started) {
+      return res.status(400).json({ message: 'invalid token' })
+    }
 
     if (privateKey) {
       // if the user inserts its private key, then it is supposed to login
-      if (!await peer.login(privateKey)) { return res.status(401).json({ message: 'invalid credentials' }) } // if the credentials (username + pk) are incorrect
+      if (!(await peer.login(privateKey))) {
+        return res.status(401).json({ message: 'invalid credentials' })
+      } // if the credentials (username + pk) are incorrect
     } else {
-      if (!await peer.createCredentials()) { return res.status(409).json({ message: 'username already exists' }) }
+      if (!(await peer.createCredentials())) {
+        return res.status(409).json({ message: 'username already exists' })
+      }
     }
   }
 
@@ -53,8 +59,15 @@ export async function start(req, res) {
 }
 
 export async function stop(req, res) {
-  // TODO: missing validation
-  throw new Error('Not implemented')
+  const peer = req.app.get('peer')
+
+  const stopped = await peer.stop()
+
+  if (!stopped) {
+    return res.status(200).json({ message: 'peer is not online' })
+  }
+
+  return res.status(200).json({ message: 'peer stopped' })
 }
 
 export async function subscribe(req, res) {
@@ -64,14 +77,22 @@ export async function subscribe(req, res) {
   const { username } = req.body
 
   // Validation
-  if (!peer.isOnline()) { return res.status(401).json({ error: 'You are offline' }) }
+  if (!peer.isOnline()) {
+    return res.status(401).json({ error: 'You are offline' })
+  }
 
-  if (username === undefined) { return res.status(400).json({ error: 'Username not provided' }) }
+  if (username === undefined) {
+    return res.status(400).json({ error: 'Username not provided' })
+  }
 
   // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
   try {
-    if (!await peer.subscribe(username)) { return res.status(200).json({ message: ' Already followed user' }) } else { return res.status(201).json({ message: 'Followed user' }) }
+    if (!(await peer.subscribe(username))) {
+      return res.status(200).json({ message: 'Already followed user' })
+    } else {
+      return res.status(201).json({ message: 'Followed user' })
+    }
   } catch (err) {
     return res.status(400).json({ message: err.message })
   }
@@ -83,13 +104,21 @@ export async function unsubscribe(req, res) {
   const { username } = req.body
 
   // Validation
-  if (!peer.isOnline()) { return res.status(401).json({ error: 'You are offline' }) }
+  if (!peer.isOnline()) {
+    return res.status(401).json({ error: 'You are offline' })
+  }
 
-  if (username === undefined) { return res.status(400).json({ error: 'Username not provided' }) }
+  if (username === undefined) {
+    return res.status(400).json({ error: 'Username not provided' })
+  }
 
   // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
-  if (await peer.unsubscribe(username)) { return res.status(200).json({ message: 'Unfollowed user' }) } else { return res.status(201).json({ message: "You didn't follow the user" }) }
+  if (await peer.unsubscribe(username)) {
+    return res.status(200).json({ message: 'Unfollowed user' })
+  } else {
+    return res.status(201).json({ message: "You didn't follow the user" })
+  }
 }
 
 export async function post(req, res) {
@@ -98,7 +127,9 @@ export async function post(req, res) {
   const { message } = req.body
 
   // Validation
-  if (message === undefined) { return res.status(400).json({ error: 'Message not provided' }) }
+  if (message === undefined) {
+    return res.status(400).json({ error: 'Message not provided' })
+  }
 
   await peer.send(message)
 

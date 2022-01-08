@@ -205,7 +205,7 @@ export default class Protocols {
       const { username, signature } = data
 
       // verifies if the username exists
-      const userPublicKey = this.peer.auth.db.get(username)
+      const userPublicKey = this.peer.auth.getPublicKey(username)
       const databaseId = this.peer.auth.db.id
 
       if (!userPublicKey) { return { credentialsCorrect: false, databaseId } }

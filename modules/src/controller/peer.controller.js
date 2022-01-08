@@ -1,7 +1,7 @@
 export async function status(req, res) {
   const peer = req.app.get('peer')  
 
-  console.log(peer.messages)
+  console.log(peer.timeline.messages)
 
   return res.status(200).json({ message: peer.status })
 }

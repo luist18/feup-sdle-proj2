@@ -6,10 +6,14 @@ import Gossipsub from 'libp2p-gossipsub'
 import { NOISE } from '@chainsafe/libp2p-noise'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import * as crypto from 'crypto'
 
 import Auth from '../auth/index.js'
 import Protocols from './protocols.js'
 import Notices from './notices.js'
+import TimelineManager from '../timeline/index.js'
+
+const SIGN_ALGORITHM = 'SHA256'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -44,7 +48,7 @@ export default class Peer {
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
 
-    this.messages = new Map()
+    this.timeline = new TimelineManager()
   }
 
   /**
@@ -224,18 +228,29 @@ export default class Peer {
     if (this.followedUsers.includes(username)) { return false }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, (post) => {
+    this._libp2p().pubsub.on(username, (message) => {
       
-      if(!this.messages.has(username)){
-        this.messages.set(username, new Array())
+      console.log("Received post: " + message.data)
+      
+      const post = JSON.parse(message.data)
+
+      const publicKey = this.auth.getPublicKey(username)
+
+      // Verifies if peer has user public key
+      if(!publicKey){
+        console.log("Ignoring post received from unknown username.")
+        return
       }
 
-      var messagesFromUser = this.messages.get(username)
-      messagesFromUser.push(uint8ArrayToString(post.data))
+      // Verifies the identity of the user who posted 
+      const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
+      if(!verifyAuthenticity){
+        console.log("User signature doesn't match. Ignoring post.")
+        return
+      }
 
-      this.messages.set(username, messagesFromUser)
-
-      console.log(`User ${username} posted ${uint8ArrayToString(post.data)}`)
+      // Adds message to the timeline
+      this.timeline.addMessage(username, post.message)
     })
 
     // Adds to followed to users
@@ -257,10 +272,14 @@ export default class Peer {
     return true
   }
 
-  async send(data) {
-    // TODO: think about this what should the channel be?
-    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(data))
+  async send(message) {
+    
+    const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(message), this.auth.privateKey).toString('base64')
+    
+    const data = {"message": message, "signature": signature}
 
-    console.log(`User ${this.username} published message ${data}`)
+    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
+
+    console.log(`User ${this.username} published message ${message}`)
   }
 }

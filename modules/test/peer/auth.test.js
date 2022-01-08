@@ -13,15 +13,15 @@ describe('auth test', () => {
     Promise.all(
       apps.slice(0, 1).map((app) =>
         request(app)
-          .post('/peer/start')
+          .put('/peer/start')
           .then((res) => {
-            expect(res.statusCode).toBe(200)
+            expect(res.statusCode).toBe(201)
             expect(res.body).toHaveProperty('message')
             expect(res.body.message).toBe('Peer started')
           })
       )
     ).then(() => done())
-  }, 30000)
+  }, 10 * 1000)
 
   test('connect app 2 and app 3 to app 1', (done) => {
     request(apps[0])
@@ -35,31 +35,50 @@ describe('auth test', () => {
         Promise.all(
           apps.slice(1).map((app) =>
             request(app)
-              .post('/peer/start')
+              .put('/peer/start')
               .send({ inviteToken: token })
               .then((res) => {
-                expect(res.statusCode).toBe(200)
+                expect(res.statusCode).toBe(201)
                 expect(res.body).toHaveProperty('message')
                 expect(res.body.message).toBe('Peer started')
               })
           )
         ).then(() => done())
       })
-  }, 30000)
+  }, 20 * 1000)
 
   test('check if indirectly connected apps have information about each other', async() => {
     await new Promise((resolve) => {
       setTimeout(() => {
-        expect(apps[2].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[1].get('peer').id().id)
-        expect(apps[1].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[2].get('peer').id().id)
+        expect(
+          apps[2]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[1].get('peer').id().id)
+        expect(
+          apps[1]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[2].get('peer').id().id)
         resolve()
       }, 10000)
     })
-  }, 50000)
+  }, 5 * 15000)
 
   test('turn off apps 🛑', (done) => {
-    Promise.all(apps.map((app) => app.get('peer').stop())).then(() => {
-      done()
-    })
-  }, 30000)
+    Promise.all(
+      apps
+        .map((app) =>
+          request(app)
+            .delete('/peer/stop')
+            .then((req) => {
+              expect(req.status).toBe(200)
+              expect(req.body).toHaveProperty('message')
+              expect(req.body.message).toBe('peer stopped')
+            })
+        )
+    ).then(() => done())
+  }, 30 * 1000)
 })

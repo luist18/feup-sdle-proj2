@@ -177,8 +177,8 @@ export default class Protocols {
       const { username } = data
 
       // verifies if the username exists
-      const usernameExists = this.peer.auth.db.usernameExists(username)
-      const databaseId = this.peer.auth.db.id
+      const usernameExists = this.peer.authManager.hasUsername(username)
+      const databaseId = this.peer.authManager.getDatabaseId()
 
       return { usernameExists, databaseId }
     })
@@ -194,8 +194,8 @@ export default class Protocols {
   async handleDatabase({ stream }) {
     this.send(stream,
       {
-        entries: this.peer.auth.db.entries,
-        id: this.peer.auth.db.id
+        entries: this.peer.authManager.getDatabaseEntries(),
+        id: this.peer.authManager.getDatabaseId()
       })
   }
 
@@ -205,8 +205,8 @@ export default class Protocols {
       const { username, signature } = data
 
       // verifies if the username exists
-      const userPublicKey = this.peer.auth.getPublicKey(username)
-      const databaseId = this.peer.auth.db.id
+      const userPublicKey = this.peer.authManager.getKeyByUsermame(username)
+      const databaseId = this.peer.authManager.getDatabaseId()
 
       if (!userPublicKey) { return { credentialsCorrect: false, databaseId } }
 

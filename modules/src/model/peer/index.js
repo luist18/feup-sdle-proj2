@@ -53,7 +53,9 @@ export default class Peer {
    * @returns {libp2p} the libp2p instance
    */
   _libp2p() {
-    if (this.libp2p === null) { throw new Error('libp2p is not initialized') }
+    if (this.libp2p === null) {
+      throw new Error('libp2p is not initialized')
+    }
 
     return this.libp2p
   }
@@ -85,7 +87,9 @@ export default class Peer {
    * @returns {Promise<boolean>} a promise that resolves when the peer is online
    */
   async start(multiaddr) {
-    if (this.isOnline()) { return false }
+    if (this.isOnline()) {
+      return false
+    }
 
     this.libp2p = await libp2p.create({
       addresses: {
@@ -113,7 +117,10 @@ export default class Peer {
 
     // happens when peer is invited to the network
     if (multiaddr) {
-      if (!await this.connect(multiaddr)) {
+      try {
+        await this.connect(multiaddr)
+      } catch (e) {
+        await this.stop()
         throw new Error('Could not connect to the peer')
       }
     }
@@ -130,35 +137,39 @@ export default class Peer {
    * @returns {Promise<boolean>} a promise that resolves when the peer is offline
    */
   async stop() {
+    if (!this.isOnline()) {
+      return false
+    }
+
     await this._libp2p().stop()
 
     this.status = Peer.STATUS.OFFLINE
+
+    return true
   }
 
   /**
    * Connects the peer to another peer.
    *
    * @param {PeerId|Multiaddr|string} multiaddr the identifier of the peer to connect to
-   * @returns {Promise<boolean>} a promise that resolves when the connection is established or failed
+   * @returns {Promise<Connection>} a promise that resolves when the connection is established or failed
    */
   async connect(multiaddr) {
-    try {
-      const conn = await this._libp2p().dial(multiaddr)
-      console.log(`connected to ${conn.remotePeer.toB58String()}`)
-      return true
-    } catch (e) {
-      // if the multiaddr is incorrect
-      return false
-    }
+    const conn = await this._libp2p().dial(multiaddr)
+
+    return conn
   }
 
   async login(privateKey) {
     // TODO verify with persistence if the credentials are valid
 
     // asks neighbors if the credentials are correct
-    const { bestNeighbor: bestNeighborId, bestReply: credentialsCorrect } = await this.protocols.checkCredentials(this.username, privateKey)
+    const { bestNeighbor: bestNeighborId, bestReply: credentialsCorrect } =
+      await this.protocols.checkCredentials(this.username, privateKey)
 
-    if (!credentialsCorrect) { return false }
+    if (!credentialsCorrect) {
+      return false
+    }
 
     // TODO additional measures (like ask to sign random string)
 
@@ -179,8 +190,11 @@ export default class Peer {
   // creates a new user in the network
   async createCredentials() {
     // asks neighbors if the username already exists
-    const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } = await this.protocols.usernameExists(this.username)
-    if (usernameAlreadyExists) { return false }
+    const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } =
+      await this.protocols.usernameExists(this.username)
+    if (usernameAlreadyExists) {
+      return false
+    }
 
     // gets the database from the neighbor
     const database = await this.protocols.database(bestNeighborId)
@@ -196,7 +210,11 @@ export default class Peer {
     this.auth.setDatabase(database)
 
     // floods the new user to the network
-    this.notices.publishDbPost(this.username, this.auth.publicKey, this.auth.db.id)
+    this.notices.publishDbPost(
+      this.username,
+      this.auth.publicKey,
+      this.auth.db.id
+    )
 
     return true
   }
@@ -218,7 +236,9 @@ export default class Peer {
 
   async subscribe(username) {
     // Assures idempotent subscribe
-    if (this.followedUsers.includes(username)) { return false }
+    if (this.followedUsers.includes(username)) {
+      return false
+    }
 
     // Adds listener
     this._libp2p().pubsub.on(username, (post) => {
@@ -238,7 +258,9 @@ export default class Peer {
 
   async unsubscribe(username) {
     // Verifies if user is subscribed to the user that he wants to unsubscribe
-    if (!this.followedUsers.includes(username)) { return false }
+    if (!this.followedUsers.includes(username)) {
+      return false
+    }
 
     this._libp2p().pubsub.unsubscribe(username)
 
@@ -248,7 +270,10 @@ export default class Peer {
 
   async send(data) {
     // TODO: think about this what should the channel be?
-    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(data))
+    await this._libp2p().pubsub.publish(
+      this.username,
+      uint8ArrayFromString(data)
+    )
 
     console.log(`User ${this.username} published message ${data}`)
   }

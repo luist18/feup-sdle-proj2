@@ -13,9 +13,9 @@ describe('auth test', () => {
     Promise.all(
       apps.slice(0, 1).map((app) =>
         request(app)
-          .post('/peer/start')
+          .put('/peer/start')
           .then((res) => {
-            expect(res.statusCode).toBe(200)
+            expect(res.statusCode).toBe(201)
             expect(res.body).toHaveProperty('message')
             expect(res.body.message).toBe('Peer started')
           })
@@ -35,10 +35,10 @@ describe('auth test', () => {
         Promise.all(
           apps.slice(1).map((app) =>
             request(app)
-              .post('/peer/start')
+              .put('/peer/start')
               .send({ inviteToken: token })
               .then((res) => {
-                expect(res.statusCode).toBe(200)
+                expect(res.statusCode).toBe(201)
                 expect(res.body).toHaveProperty('message')
                 expect(res.body.message).toBe('Peer started')
               })
@@ -50,16 +50,35 @@ describe('auth test', () => {
   test('check if indirectly connected apps have information about each other', async() => {
     await new Promise((resolve) => {
       setTimeout(() => {
-        expect(apps[2].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[1].get('peer').id().id)
-        expect(apps[1].get('peer').neighbors().map((element) => element.id)).toContainEqual(apps[2].get('peer').id().id)
+        expect(
+          apps[2]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[1].get('peer').id().id)
+        expect(
+          apps[1]
+            .get('peer')
+            .neighbors()
+            .map((element) => element.id)
+        ).toContainEqual(apps[2].get('peer').id().id)
         resolve()
       }, 10000)
     })
   }, 50000)
 
   test('turn off apps 🛑', (done) => {
-    Promise.all(apps.map((app) => app.get('peer').stop())).then(() => {
-      done()
-    })
+    Promise.all(
+      apps
+        .map((app) =>
+          request(app)
+            .delete('/peer/stop')
+            .then((req) => {
+              expect(req.status).toBe(200)
+              expect(req.body).toHaveProperty('message')
+              expect(req.body.message).toBe('peer stopped')
+            })
+        )
+    ).then(() => done())
   }, 30000)
 })

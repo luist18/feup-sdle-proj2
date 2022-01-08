@@ -37,8 +37,8 @@ export default class Notices {
     //     if it is lower, do something as well
 
     const { username, publicKey, databaseId } = message.data
-    if (databaseId !== this.peer.auth.db.id + 1) { return }
+    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) { return }
 
-    this.peer.auth.db.set(username, publicKey)
+    this.peer.authManager.setEntry(username, publicKey)
   }
 }

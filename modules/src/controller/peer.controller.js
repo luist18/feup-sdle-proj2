@@ -81,11 +81,6 @@ export async function subscribe(req, res) {
   // Subscription through usernames
   const { username } = req.body
 
-  // Validation
-  if (!peer.isOnline()) {
-    return res.status(rest.status.UNAUTHORIZED).json({ error: rest.message.peer.OFFLINE })
-  }
-
   if (username === undefined) {
     return res.status(rest.status.BAD_REQUEST).json({ error: rest.message.body.missing('username') })
   }
@@ -107,11 +102,6 @@ export async function unsubscribe(req, res) {
   const peer = req.app.get('peer')
 
   const { username } = req.body
-
-  // Validation
-  if (!peer.isOnline()) {
-    return res.status(rest.status.UNAUTHORIZED).json({ error: rest.message.peer.OFFLINE })
-  }
 
   if (username === undefined) {
     return res.status(rest.status.BAD_REQUEST).json({ error: rest.message.body.missing('username') })
@@ -144,19 +134,11 @@ export async function post(req, res) {
 export function token(req, res) {
   const peer = req.app.get('peer')
 
-  if (!peer.isOnline()) {
-    return res.status(rest.status.UNAUTHORIZED).json({ message: rest.message.peer.OFFLINE })
-  }
-
   return res.status(rest.status.OK).json({ token: peer.token() })
 }
 
 export function database(req, res) {
   const peer = req.app.get('peer')
-
-  if (!peer.isOnline()) {
-    return res.status(rest.status.UNAUTHORIZED).json({ message: rest.message.peer.OFFLINE })
-  }
 
   return res.status(rest.status.OK).json({
     database: {

@@ -307,7 +307,7 @@ export default class Peer {
   async send(message) {
     const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(message), this.authManager.privateKey).toString('base64')
     
-    const data = {"message": message, "signature": signature}
+    const data = {message, signature}
 
     await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
 

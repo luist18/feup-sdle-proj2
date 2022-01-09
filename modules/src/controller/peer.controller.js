@@ -18,6 +18,7 @@ export async function start(req, res) {
   // TODO missing validation
   const { inviteToken, privateKey } = req.body
 
+  // TODO I think this could be refactored in the future
   if (!inviteToken) {
     // if the network is new, the user is also new, ignores the secret key
     peer.authManager.createCredentials()

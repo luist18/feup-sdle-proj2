@@ -255,7 +255,7 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, this.subManager.handlePost)
+    this._libp2p().pubsub.on(username, this.subManager.handlePost.bind(this, username))
 
     // Adds to followed to users
     this.followedUsers.push(username)
@@ -281,7 +281,10 @@ export default class Peer {
 
   async send(message) {
 
-    const signature = SignatureManager.sign(this.authManager.privateKey, message)
+    const signature = SignatureManager.sign(
+      message,
+      this.authManager.privateKey
+    );
 
     const data = {message, signature}
 

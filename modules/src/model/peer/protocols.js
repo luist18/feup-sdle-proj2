@@ -2,6 +2,7 @@ import { pipe } from 'it-pipe'
 import Database from '../auth/database.js'
 import Message from '../message/index.js'
 import * as crypto from 'crypto'
+import topics from '../message/topics.js'
 
 const SIGN_ALGORITHM = 'SHA256'
 
@@ -13,9 +14,9 @@ export default class Protocols {
 
   // handles the subscriptions to peer protocol
   subscribeAll() {
-    this.subscribe('/usernameExists', this.handleUsernameExists.bind(this))
-    this.subscribe('/database', this.handleDatabase.bind(this))
-    this.subscribe('/checkCredentials', this.handleCheckCredentials.bind(this))
+    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}usernameExists`, this.handleUsernameExists.bind(this))
+    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}database`, this.handleDatabase.bind(this))
+    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}checkCredentials`, this.handleCheckCredentials.bind(this))
   }
 
   // dest: peerId or multiaddr
@@ -35,7 +36,7 @@ export default class Protocols {
   // sink: function that receives a Message
   // returns whatever sink returns or null
   async send(stream, body, sink = null) {
-    const message = new Message(body)
+    const message = this.peer.messageBuilder.build(body)
 
     let res = null
 
@@ -78,11 +79,12 @@ export default class Protocols {
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
       const { databaseId, usernameExists } = await this.sendTo(neighbor,
-        '/usernameExists',
+        `${topics.prefix.PROTOCOL}${topics.SEPARATOR}usernameExists`,
         { username: username },
         async(data) => {
           // deals with the reply
-          const rep = JSON.parse(data)
+          const json = JSON.parse(data)
+          const rep = Message.fromJson(json)
 
           return { databaseId: rep.data.databaseId, usernameExists: rep.data.usernameExists }
         })
@@ -100,10 +102,11 @@ export default class Protocols {
   async database(peerId) {
     const db = await this.sendTo(
       peerId,
-      '/database',
+      `${topics.prefix.PROTOCOL}${topics.SEPARATOR}database`,
       {},
       async(data) => {
-        const message = JSON.parse(data)
+        const json = JSON.parse(data)
+        const message = Message.fromJson(json)
 
         const entries = message.data.entries
         const id = message.data.id
@@ -127,16 +130,17 @@ export default class Protocols {
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
       const { databaseId, credentialsCorrect } = await this.sendTo(neighbor,
-        '/checkCredentials',
+        `${topics.prefix.PROTOCOL}${topics.SEPARATOR}checkCredentials`,
         {
           username: username,
           signature: signature
         },
         async(data) => {
           // deals with the reply
-          const rep = JSON.parse(data)
+          const json = JSON.parse(data)
+          const message = Message.fromJson(json)
 
-          return { databaseId: rep.data.databaseId, credentialsCorrect: rep.data.credentialsCorrect }
+          return { databaseId: message.data.databaseId, credentialsCorrect: message.data.credentialsCorrect }
         })
 
       if (databaseId > bestDatabaseId) {
@@ -162,7 +166,9 @@ export default class Protocols {
     await pipe(stream,
       async function(source) {
         for await (const msg of source) {
-          const message = JSON.parse(msg)
+          const json = JSON.parse(msg)
+          const message = Message.fromJson(json)
+
           console.log(`received: ${JSON.stringify(message)}`)
           object = handler(message)
         }

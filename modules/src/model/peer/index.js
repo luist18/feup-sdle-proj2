@@ -6,10 +6,12 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
-import peerConfig from '../../config/peer.js'
+import topics from '../message/topics.js'
+import MessageBuilder from '../message/builder.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -41,6 +43,7 @@ export default class Peer {
 
     this.authManager = new AuthManager()
 
+    this.messageBuilder = new MessageBuilder(this.username)
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
   }
@@ -250,16 +253,17 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, (post) => {
+    this._libp2p().pubsub.on(`${topics.prefix.POST}${topics.SEPARATOR}${username}`, (post) => {
       // TODO: save post
-      // Idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
-      console.log(`User ${username} posted ${uint8ArrayToString(post.data)}`)
+      const string = uint8ArrayToString(post.data)
+      const json = JSON.parse(string)
+      console.log(json)
     })
 
     // Adds to followed to users
     this.followedUsers.push(username)
 
-    this._libp2p().pubsub.subscribe(username)
+    this._libp2p().pubsub.subscribe(`${topics.prefix.POST}${topics.SEPARATOR}${username}`)
 
     console.log(`User ${this.username} followed user ${username}`)
     return true
@@ -277,13 +281,13 @@ export default class Peer {
     return true
   }
 
-  async send(data) {
+  async send(content) {
     // TODO: think about this what should the channel be?
     await this._libp2p().pubsub.publish(
-      this.username,
-      uint8ArrayFromString(data)
+      `${topics.prefix.POST}${topics.SEPARATOR}${this.username}`,
+      uint8ArrayFromString(JSON.stringify(this.messageBuilder.buildPost(content)))
     )
 
-    console.log(`User ${this.username} published message ${data}`)
+    console.log(`User ${this.username} published message ${content}`)
   }
 }

@@ -1,6 +1,7 @@
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import Message from '../message/index.js'
+import topics from '../message/topics.js'
 
 // notices are messages that are sent to all the network
 export default class Notices {
@@ -9,15 +10,15 @@ export default class Notices {
   }
 
   subscribeAll() {
-    this.subscribeNotice('/db/post', this.handleDbPost)
+    this.subscribeNotice(`${topics.prefix.NOTICE}${topics.SEPARATOR}db${topics.SEPARATOR}post`, this.handleDbPost)
   }
 
   publishDbPost(username, publicKey, databaseId) {
-    this.publish('/db/post', { username, publicKey, databaseId })
+    this.publish(`${topics.prefix.NOTICE}${topics.SEPARATOR}db${topics.SEPARATOR}post`, { username, publicKey, databaseId })
   }
 
-  publish(channel, object) {
-    const message = new Message(object)
+  publish(channel, body) {
+    const message = this.peer.messageBuilder.build(body)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
     this.peer.libp2p.pubsub.publish(channel, uint8ArrayFromString(JSON.stringify(message)))
   }
@@ -28,9 +29,10 @@ export default class Notices {
   }
 
   handleDbPost(msg) {
-    console.log('received /db/post')
+    console.log('received notice:db:post')
 
-    const message = JSON.parse(uint8ArrayToString(msg.data))
+    const json = JSON.parse(uint8ArrayToString(msg.data))
+    const message = Message.fromJson(json)
 
     // TODO accept IDs that are not the one exactly above
     //     if it is even higher, question about the updated database

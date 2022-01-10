@@ -13,6 +13,7 @@ import Protocols from './protocols.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
+import TimelineManager from '../timeline/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -48,10 +49,12 @@ export default class Peer {
     this.messageBuilder = new MessageBuilder(this.username)
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
+
+    this.timeline = new TimelineManager()
   }
 
   /**
-   * Gets the libpo2p instance.
+   * Gets the libp2p instance.
    *
    * @throws {Error} if the libp2p instance is not initialized,
    * this happens when the peer is offline.
@@ -255,11 +258,31 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(`${topics.prefix.POST}${topics.SEPARATOR}${username}`, (post) => {
-      // TODO: save post
-      const string = uint8ArrayToString(post.data)
-      const json = JSON.parse(string)
-      console.log(json)
+    this._libp2p().pubsub.on(`${topics.prefix.POST}${topics.SEPARATOR}${username}`, (message) => {
+      const messageString = uint8ArrayToString(message.data)
+      console.log('Received post:')
+
+      const post = JSON.parse(messageString)
+      console.log(post)
+
+      const publicKey = this.authManager.getKeyByUsername(username)
+
+      // Verifies if peer has user public key
+      if (!publicKey) {
+        console.log('Ignoring post received from unknown username.')
+        return
+      }
+
+      // TODO
+      // // Verifies the identity of the user who posted
+      // const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
+      // if (!verifyAuthenticity) {
+      //   console.log("User signature doesn't match. Ignoring post.")
+      //   return
+      // }
+
+      // Adds message to the timeline
+      this.timeline.addMessage(username, post.message)
     })
 
     // Adds to followed to users
@@ -296,3 +319,4 @@ export default class Peer {
     console.log(`User ${this.username} published message ${content}`)
   }
 }
+

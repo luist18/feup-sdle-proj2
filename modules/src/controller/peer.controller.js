@@ -1,8 +1,9 @@
 import rest from '../config/rest.js'
 
 export async function status(req, res) {
-  const peer = req.app.get('peer')
-  const status = peer.status
+  const peer = req.app.get('peer')  
+
+  console.log(peer.timeline.messages)
 
   return res.status(rest.status.OK).json({ message: status })
 }

@@ -6,6 +6,9 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+
+import * as crypto from 'crypto'
+
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
@@ -43,10 +46,12 @@ export default class Peer {
 
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
+
+    this.timeline = new TimelineManager()
   }
 
   /**
-   * Gets the libpo2p instance.
+   * Gets the libp2p instance.
    *
    * @throws {Error} if the libp2p instance is not initialized,
    * this happens when the peer is offline.
@@ -250,10 +255,29 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, (post) => {
-      // TODO: save post
-      // Idea: create a dispatcher, send this message to the dispatcher and dispatcher provides a websocket to communicate with clients
-      console.log(`User ${username} posted ${uint8ArrayToString(post.data)}`)
+    this._libp2p().pubsub.on(username, (message) => {
+      
+      console.log("Received post: " + message.data)
+      
+      const post = JSON.parse(message.data)
+
+      const publicKey = this.authManager.getKeyByUsermame(username)
+
+      // Verifies if peer has user public key
+      if(!publicKey){
+        console.log("Ignoring post received from unknown username.")
+        return
+      }
+
+      // Verifies the identity of the user who posted 
+      const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
+      if(!verifyAuthenticity){
+        console.log("User signature doesn't match. Ignoring post.")
+        return
+      }
+
+      // Adds message to the timeline
+      this.timeline.addMessage(username, post.message)
     })
 
     // Adds to followed to users
@@ -277,13 +301,14 @@ export default class Peer {
     return true
   }
 
-  async send(data) {
-    // TODO: think about this what should the channel be?
-    await this._libp2p().pubsub.publish(
-      this.username,
-      uint8ArrayFromString(data)
-    )
 
-    console.log(`User ${this.username} published message ${data}`)
+  async send(message) {
+    const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(message), this.authManager.privateKey).toString('base64')
+    
+    const data = {message, signature}
+
+    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
+
+    console.log(`User ${this.username} published message ${message}`)
   }
 }

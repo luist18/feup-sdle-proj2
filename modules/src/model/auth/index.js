@@ -79,6 +79,8 @@ class AuthManager {
     this.privateKey = privateKey
   }
 
+
+
   // creates new database
   createDatabase(username) {
     this._db = new Database()

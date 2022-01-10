@@ -12,6 +12,7 @@ import Notices from './notices.js'
 import Protocols from './protocols.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
+import PostManager from '../timeline/postManager.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -42,6 +43,7 @@ export default class Peer {
     this.status = Peer.STATUS.OFFLINE
 
     this.authManager = new AuthManager()
+    this.postManager = new PostManager()
 
     this.messageBuilder = new MessageBuilder(this.username)
     this.protocols = new Protocols(this)
@@ -282,11 +284,14 @@ export default class Peer {
   }
 
   async send(content) {
-    // TODO: think about this what should the channel be?
+    const post = this.messageBuilder.buildPost(content)
+
     await this._libp2p().pubsub.publish(
       `${topics.prefix.POST}${topics.SEPARATOR}${this.username}`,
-      uint8ArrayFromString(JSON.stringify(this.messageBuilder.buildPost(content)))
+      uint8ArrayFromString(JSON.stringify(post))
     )
+
+    this.postManager.push(post)
 
     console.log(`User ${this.username} published message ${content}`)
   }

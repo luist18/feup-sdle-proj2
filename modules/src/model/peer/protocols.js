@@ -121,7 +121,7 @@ export default class Protocols {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = SignatureManager.sign(privateKey, username)
+    const signature = SignatureManager.sign(username, privateKey);
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {

@@ -12,9 +12,7 @@ import * as crypto from 'crypto'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
-import TimelineManager from '../timeline/index.js'
-
-const SIGN_ALGORITHM = 'SHA256'
+import peerConfig from '../../config/peer.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -62,7 +60,7 @@ export default class Peer {
    */
   _libp2p() {
     if (this.libp2p === null) {
-      throw new Error('libp2p is not initialized')
+      throw new Error(peerConfig.error.LIBP2P_OFFLINE)
     }
 
     return this.libp2p
@@ -129,7 +127,7 @@ export default class Peer {
         await this.connect(multiaddr)
       } catch (e) {
         await this.stop()
-        throw new Error('Could not connect to the peer')
+        throw new Error(peerConfig.error.PEER_CONNECTION_FAILED)
       }
     }
 
@@ -244,11 +242,11 @@ export default class Peer {
 
   async subscribe(username) {
     if (username === this.username) {
-      throw new Error('You cannot subscribe to yourself')
+      throw new Error(peerConfig.error.SELF_SUBSCRIPTION)
     }
 
     if (!this.authManager.hasUsername(username)) {
-      throw new Error('User does not exist')
+      throw new Error(peerConfig.error.USERNAME_NOT_FOUND)
     }
 
     // Assures idempotent subscribe

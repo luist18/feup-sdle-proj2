@@ -24,7 +24,7 @@ export async function start(req, res) {
   if (!token) { token = inviteToken }
 
   // TODO I think this could be refactored in the future
-  if (!inviteToken) {
+  if (!token) {
     // if the network is new, the user is also new, ignores the secret key
     peer.authManager.createCredentials()
     peer.authManager.createDatabase(username)

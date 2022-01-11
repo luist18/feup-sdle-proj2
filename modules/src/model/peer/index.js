@@ -6,18 +6,24 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-
+import PeerId from 'peer-id'
+import { readFileSync, writeFileSync } from 'fs'
 import * as crypto from 'crypto'
 
+import TimelineManager from '../timeline/index.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
 import peerConfig from '../../config/peer.js'
 
+
 const PEER_STATUS = {
   ONLINE: 'online',
   OFFLINE: 'offline'
 }
+
+const jsonFilePath = "./src/model/peer/id.json";
+
 
 export default class Peer {
   /**
@@ -96,6 +102,14 @@ export default class Peer {
     if (this.isOnline()) {
       return false
     }
+    
+    let peerID;
+    try{
+      peerID = await PeerId.createFromJSON(JSON.parse(readFileSync(jsonFilePath)))
+    }catch (err){
+      console.log("Peer ID not found.")
+      console.log(err)
+    }
 
     this.libp2p = await libp2p.create({
       addresses: {
@@ -109,6 +123,7 @@ export default class Peer {
         // we add the DHT module that will enable Peer and Content Routing
         dht: kadDHT
       },
+      peerId: peerID,
       config: {
         dht: {
           // dht must be enabled
@@ -133,7 +148,7 @@ export default class Peer {
 
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
-
+    console.log("ID: " + this.id())
     return true
   }
 
@@ -148,6 +163,8 @@ export default class Peer {
     }
 
     await this._libp2p().stop()
+    
+    writeFileSync(jsonFilePath, JSON.stringify(this.id()), 'utf8')
 
     this.status = Peer.STATUS.OFFLINE
 
@@ -308,6 +325,8 @@ export default class Peer {
     const data = {message, signature}
 
     await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
+
+    this.timeline.addMessage(this.username, message)
 
     console.log(`User ${this.username} published message ${message}`)
   }

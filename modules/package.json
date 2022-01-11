@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
+    "start": "node --experimental-json-modules index.js",
     "dev": "nodemon index.js",
     "lint": "eslint --fix --ext .js .",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --silent"
@@ -27,6 +27,7 @@
     "morgan": "^1.10.0",
     "node-fetch": "^3.1.0",
     "nodemon": "^2.0.15",
+    "peer-id": "^0.16.0",
     "uint8arrays": "^3.0.0"
   },
   "devDependencies": {

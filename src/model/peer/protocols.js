@@ -14,9 +14,18 @@ export default class Protocols {
 
   // handles the subscriptions to peer protocol
   subscribeAll() {
-    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}usernameExists`, this.handleUsernameExists.bind(this))
-    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}database`, this.handleDatabase.bind(this))
-    this.subscribe(`${topics.prefix.PROTOCOL}${topics.SEPARATOR}checkCredentials`, this.handleCheckCredentials.bind(this))
+    this.subscribe(
+      topics.topic(topics.prefix.PROTOCOL, 'has-username'),
+      this.handleUsernameExists.bind(this)
+    )
+    this.subscribe(
+      topics.topic(topics.prefix.PROTOCOL, 'database'),
+      this.handleDatabase.bind(this)
+    )
+    this.subscribe(
+      topics.topic(topics.prefix.PROTOCOL, 'verify-auth'),
+      this.handleCheckCredentials.bind(this)
+    )
   }
 
   // dest: peerId or multiaddr
@@ -44,7 +53,7 @@ export default class Protocols {
 
     if (sink) {
       await pipe(
-      // Source data
+        // Source data
         [JSON.stringify(message)],
         // Write to the stream, and pass its output to the next function
         stream,
@@ -58,7 +67,7 @@ export default class Protocols {
       )
     } else {
       await pipe(
-      // Source data
+        // Source data
         [JSON.stringify(message)],
         // Write to the stream, and pass its output to the next function
         stream
@@ -78,16 +87,21 @@ export default class Protocols {
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
-      const { databaseId, usernameExists } = await this.sendTo(neighbor,
-        `${topics.prefix.PROTOCOL}${topics.SEPARATOR}usernameExists`,
+      const { databaseId, usernameExists } = await this.sendTo(
+        neighbor,
+        topics.topic(topics.prefix.PROTOCOL, 'has-username'),
         { username: username },
         async(data) => {
           // deals with the reply
           const json = JSON.parse(data)
           const rep = Message.fromJson(json)
 
-          return { databaseId: rep.data.databaseId, usernameExists: rep.data.usernameExists }
-        })
+          return {
+            databaseId: rep.data.databaseId,
+            usernameExists: rep.data.usernameExists
+          }
+        }
+      )
 
       if (databaseId > bestDatabaseId) {
         bestDatabaseId = databaseId
@@ -102,7 +116,7 @@ export default class Protocols {
   async database(peerId) {
     const db = await this.sendTo(
       peerId,
-      `${topics.prefix.PROTOCOL}${topics.SEPARATOR}database`,
+      topics.topic(topics.prefix.PROTOCOL, 'database'),
       {},
       async(data) => {
         const json = JSON.parse(data)
@@ -125,12 +139,15 @@ export default class Protocols {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(username), privateKey).toString('base64')
+    const signature = crypto
+      .sign(SIGN_ALGORITHM, Buffer.from(username), privateKey)
+      .toString('base64')
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
-      const { databaseId, credentialsCorrect } = await this.sendTo(neighbor,
-        `${topics.prefix.PROTOCOL}${topics.SEPARATOR}checkCredentials`,
+      const { databaseId, credentialsCorrect } = await this.sendTo(
+        neighbor,
+        topics.topic(topics.prefix.PROTOCOL, 'verify-auth'),
         {
           username: username,
           signature: signature
@@ -140,8 +157,12 @@ export default class Protocols {
           const json = JSON.parse(data)
           const message = Message.fromJson(json)
 
-          return { databaseId: message.data.databaseId, credentialsCorrect: message.data.credentialsCorrect }
-        })
+          return {
+            databaseId: message.data.databaseId,
+            credentialsCorrect: message.data.credentialsCorrect
+          }
+        }
+      )
 
       if (databaseId > bestDatabaseId) {
         bestDatabaseId = databaseId
@@ -163,67 +184,76 @@ export default class Protocols {
   // returns the object that was returned by the handler function
   async receive(stream, handler) {
     let object = null
-    await pipe(stream,
-      async function(source) {
-        for await (const msg of source) {
-          const json = JSON.parse(msg)
-          const message = Message.fromJson(json)
+    await pipe(stream, async function(source) {
+      for await (const msg of source) {
+        const json = JSON.parse(msg)
+        const message = Message.fromJson(json)
 
-          console.log(`received: ${JSON.stringify(message)}`)
-          object = handler(message)
-        }
-      })
+        console.log(`received: ${JSON.stringify(message)}`)
+        object = handler(message)
+      }
+    })
 
     return object
   }
 
   async handleUsernameExists({ stream }) {
-    const { usernameExists, databaseId } = await this.receive(stream, (message) => {
-      const { data } = message
-      const { username } = data
+    const { usernameExists, databaseId } = await this.receive(
+      stream,
+      (message) => {
+        const { data } = message
+        const { username } = data
 
-      // verifies if the username exists
-      const usernameExists = this.peer.authManager.hasUsername(username)
-      const databaseId = this.peer.authManager.getDatabaseId()
+        // verifies if the username exists
+        const usernameExists = this.peer.authManager.hasUsername(username)
+        const databaseId = this.peer.authManager.getDatabaseId()
 
-      return { usernameExists, databaseId }
-    })
+        return { usernameExists, databaseId }
+      }
+    )
 
     // TODO check if the variables are null
-    this.send(stream,
-      {
-        usernameExists: usernameExists,
-        databaseId: databaseId
-      })
+    this.send(stream, {
+      usernameExists: usernameExists,
+      databaseId: databaseId
+    })
   }
 
   async handleDatabase({ stream }) {
-    this.send(stream,
-      {
-        entries: this.peer.authManager.getDatabaseEntries(),
-        id: this.peer.authManager.getDatabaseId()
-      })
+    this.send(stream, {
+      entries: this.peer.authManager.getDatabaseEntries(),
+      id: this.peer.authManager.getDatabaseId()
+    })
   }
 
   async handleCheckCredentials({ stream }) {
-    const { credentialsCorrect, databaseId } = await this.receive(stream, (message) => {
-      const { data } = message
-      const { username, signature } = data
+    const { credentialsCorrect, databaseId } = await this.receive(
+      stream,
+      (message) => {
+        const { data } = message
+        const { username, signature } = data
 
-      // verifies if the username exists
-      const userPublicKey = this.peer.authManager.getKeyByUsermame(username)
-      const databaseId = this.peer.authManager.getDatabaseId()
+        // verifies if the username exists
+        const userPublicKey = this.peer.authManager.getKeyByUsermame(username)
+        const databaseId = this.peer.authManager.getDatabaseId()
 
-      if (!userPublicKey) { return { credentialsCorrect: false, databaseId } }
+        if (!userPublicKey) {
+          return { credentialsCorrect: false, databaseId }
+        }
 
-      const credentialsCorrect = crypto.verify(SIGN_ALGORITHM, Buffer.from(username), userPublicKey, Buffer.from(signature, 'base64'))
-      return { credentialsCorrect, databaseId }
+        const credentialsCorrect = crypto.verify(
+          SIGN_ALGORITHM,
+          Buffer.from(username),
+          userPublicKey,
+          Buffer.from(signature, 'base64')
+        )
+        return { credentialsCorrect, databaseId }
+      }
+    )
+
+    this.send(stream, {
+      credentialsCorrect: credentialsCorrect,
+      databaseId: databaseId
     })
-
-    this.send(stream,
-      {
-        credentialsCorrect: credentialsCorrect,
-        databaseId: databaseId
-      })
   }
 }

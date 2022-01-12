@@ -10,17 +10,27 @@ export default class Notices {
   }
 
   subscribeAll() {
-    this.subscribeNotice(`${topics.prefix.NOTICE}${topics.SEPARATOR}db${topics.SEPARATOR}post`, this.handleDbPost)
+    this.subscribeNotice(
+      topics.topic(topics.prefix.NOTICE, 'db', 'post'),
+      this.handleDbPost
+    )
   }
 
   publishDbPost(username, publicKey, databaseId) {
-    this.publish(`${topics.prefix.NOTICE}${topics.SEPARATOR}db${topics.SEPARATOR}post`, { username, publicKey, databaseId })
+    this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
+      username,
+      publicKey,
+      databaseId
+    })
   }
 
   publish(channel, body) {
     const message = this.peer.messageBuilder.build(body)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
-    this.peer.libp2p.pubsub.publish(channel, uint8ArrayFromString(JSON.stringify(message)))
+    this.peer.libp2p.pubsub.publish(
+      channel,
+      uint8ArrayFromString(JSON.stringify(message))
+    )
   }
 
   subscribeNotice(channel, handler) {
@@ -39,7 +49,9 @@ export default class Notices {
     //     if it is lower, do something as well
 
     const { username, publicKey, databaseId } = message.data
-    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) { return }
+    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
+      return
+    }
 
     this.peer.authManager.setEntry(username, publicKey)
   }

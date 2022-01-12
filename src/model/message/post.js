@@ -7,6 +7,12 @@ import PostData from './postData.js'
  */
 export default class Post extends Message {
   constructor(content, owner, ownerTimestamp, from, timestamp) {
-    super(new PostData(content, owner, ownerTimestamp), owner, ownerTimestamp, from || owner, timestamp || ownerTimestamp)
+    super(
+      new PostData(content, owner, ownerTimestamp),
+      owner,
+      ownerTimestamp,
+      from || owner,
+      timestamp || ownerTimestamp
+    )
   }
 }

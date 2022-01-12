@@ -37,7 +37,13 @@ export default class MessageBuilder {
    * @returns the new message
    */
   buildFromMessage(message) {
-    return new Message(message.data, message._metadata.owner, this.username, message._metadata.ownerTimestamp, Date.now())
+    return new Message(
+      message.data,
+      message._metadata.owner,
+      this.username,
+      message._metadata.ownerTimestamp,
+      Date.now()
+    )
   }
 
   /**

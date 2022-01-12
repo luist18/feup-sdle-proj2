@@ -258,37 +258,40 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(`${topics.prefix.POST}${topics.SEPARATOR}${username}`, (message) => {
-      const messageString = uint8ArrayToString(message.data)
-      console.log('Received post:')
+    this._libp2p().pubsub.on(
+      topics.join(topics.prefix.POST, username),
+      (message) => {
+        const messageString = uint8ArrayToString(message.data)
+        console.log('Received post:')
 
-      const post = JSON.parse(messageString)
-      console.log(post)
+        const post = JSON.parse(messageString)
+        console.log(post)
 
-      const publicKey = this.authManager.getKeyByUsername(username)
+        const publicKey = this.authManager.getKeyByUsername(username)
 
-      // Verifies if peer has user public key
-      if (!publicKey) {
-        console.log('Ignoring post received from unknown username.')
-        return
+        // Verifies if peer has user public key
+        if (!publicKey) {
+          console.log('Ignoring post received from unknown username.')
+          return
+        }
+
+        // TODO
+        // // Verifies the identity of the user who posted
+        // const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
+        // if (!verifyAuthenticity) {
+        //   console.log("User signature doesn't match. Ignoring post.")
+        //   return
+        // }
+
+        // Adds message to the timeline
+        this.timeline.addMessage(username, post.message)
       }
-
-      // TODO
-      // // Verifies the identity of the user who posted
-      // const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
-      // if (!verifyAuthenticity) {
-      //   console.log("User signature doesn't match. Ignoring post.")
-      //   return
-      // }
-
-      // Adds message to the timeline
-      this.timeline.addMessage(username, post.message)
-    })
+    )
 
     // Adds to followed to users
     this.followedUsers.push(username)
 
-    this._libp2p().pubsub.subscribe(`${topics.prefix.POST}${topics.SEPARATOR}${username}`)
+    this._libp2p().pubsub.subscribe(topics.join(topics.prefix.POST, username))
 
     console.log(`User ${this.username} followed user ${username}`)
     return true
@@ -310,7 +313,7 @@ export default class Peer {
     const post = this.messageBuilder.buildPost(content)
 
     await this._libp2p().pubsub.publish(
-      `${topics.prefix.POST}${topics.SEPARATOR}${this.username}`,
+      topics.join(topics.prefix.POST, this.username),
       uint8ArrayFromString(JSON.stringify(post))
     )
 
@@ -319,4 +322,3 @@ export default class Peer {
     console.log(`User ${this.username} published message ${content}`)
   }
 }
-

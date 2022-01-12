@@ -259,7 +259,7 @@ export default class Peer {
 
     // Adds listener
     this._libp2p().pubsub.on(
-      topics.join(topics.prefix.POST, username),
+      topics.topic(topics.prefix.POST, username),
       (message) => {
         const messageString = uint8ArrayToString(message.data)
         console.log('Received post:')
@@ -291,7 +291,7 @@ export default class Peer {
     // Adds to followed to users
     this.followedUsers.push(username)
 
-    this._libp2p().pubsub.subscribe(topics.join(topics.prefix.POST, username))
+    this._libp2p().pubsub.subscribe(topics.topic(topics.prefix.POST, username))
 
     console.log(`User ${this.username} followed user ${username}`)
     return true
@@ -313,7 +313,7 @@ export default class Peer {
     const post = this.messageBuilder.buildPost(content)
 
     await this._libp2p().pubsub.publish(
-      topics.join(topics.prefix.POST, this.username),
+      topics.topic(topics.prefix.POST, this.username),
       uint8ArrayFromString(JSON.stringify(post))
     )
 

@@ -53,7 +53,7 @@ export default {
 
     subscription: {
       ALREADY_IN: 'Already following user',
-      ALREADY_OUT: 'You didn\'t follow this user',
+      ALREADY_OUT: "You didn't follow this user",
       ADDED: 'Followed user',
       DELETED: 'Unfollowed user'
     },

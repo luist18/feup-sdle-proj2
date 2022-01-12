@@ -6,13 +6,14 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-
-import * as crypto from 'crypto'
-
+import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
-import peerConfig from '../../config/peer.js'
+import topics from '../message/topics.js'
+import MessageBuilder from '../message/builder.js'
+import PostManager from '../timeline/postManager.js'
+import TimelineManager from '../timeline/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -43,7 +44,9 @@ export default class Peer {
     this.status = Peer.STATUS.OFFLINE
 
     this.authManager = new AuthManager()
+    this.postManager = new PostManager()
 
+    this.messageBuilder = new MessageBuilder(this.username)
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
 
@@ -255,35 +258,40 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, (message) => {
-      
-      console.log("Received post: " + message.data)
-      
-      const post = JSON.parse(message.data)
+    this._libp2p().pubsub.on(
+      topics.topic(topics.prefix.POST, username),
+      (message) => {
+        const messageString = uint8ArrayToString(message.data)
+        console.log('Received post:')
 
-      const publicKey = this.authManager.getKeyByUsermame(username)
+        const post = JSON.parse(messageString)
+        console.log(post)
 
-      // Verifies if peer has user public key
-      if(!publicKey){
-        console.log("Ignoring post received from unknown username.")
-        return
+        const publicKey = this.authManager.getKeyByUsername(username)
+
+        // Verifies if peer has user public key
+        if (!publicKey) {
+          console.log('Ignoring post received from unknown username.')
+          return
+        }
+
+        // TODO
+        // // Verifies the identity of the user who posted
+        // const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
+        // if (!verifyAuthenticity) {
+        //   console.log("User signature doesn't match. Ignoring post.")
+        //   return
+        // }
+
+        // Adds message to the timeline
+        this.timeline.addMessage(username, post.message)
       }
-
-      // Verifies the identity of the user who posted 
-      const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
-      if(!verifyAuthenticity){
-        console.log("User signature doesn't match. Ignoring post.")
-        return
-      }
-
-      // Adds message to the timeline
-      this.timeline.addMessage(username, post.message)
-    })
+    )
 
     // Adds to followed to users
     this.followedUsers.push(username)
 
-    this._libp2p().pubsub.subscribe(username)
+    this._libp2p().pubsub.subscribe(topics.topic(topics.prefix.POST, username))
 
     console.log(`User ${this.username} followed user ${username}`)
     return true
@@ -301,14 +309,16 @@ export default class Peer {
     return true
   }
 
+  async send(content) {
+    const post = this.messageBuilder.buildPost(content)
 
-  async send(message) {
-    const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(message), this.authManager.privateKey).toString('base64')
-    
-    const data = {message, signature}
+    await this._libp2p().pubsub.publish(
+      topics.topic(topics.prefix.POST, this.username),
+      uint8ArrayFromString(JSON.stringify(post))
+    )
 
-    await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
+    this.postManager.push(post)
 
-    console.log(`User ${this.username} published message ${message}`)
+    console.log(`User ${this.username} published message ${content}`)
   }
 }

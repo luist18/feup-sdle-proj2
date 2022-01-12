@@ -14,7 +14,7 @@
     "node": ">=15.X"
   },
   "dependencies": {
-    "@chainsafe/libp2p-noise": "^5.0.0",
+    "@chainsafe/libp2p-noise": "5.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
@@ -27,7 +27,8 @@
     "morgan": "^1.10.0",
     "node-fetch": "^3.1.0",
     "nodemon": "^2.0.15",
-    "uint8arrays": "^3.0.0"
+    "uint8arrays": "^3.0.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "eslint": "^7.32.0",

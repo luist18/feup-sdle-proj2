@@ -1,7 +1,16 @@
 import express from 'express'
 
 import { validateOnlineStatus } from '../middleware/peer.js'
-import { start, status, stop, subscribe, unsubscribe, post, token, database } from '../controller/peer.controller.js'
+import {
+  start,
+  status,
+  stop,
+  subscribe,
+  unsubscribe,
+  post,
+  token,
+  database
+} from '../controller/peer.controller.js'
 
 const router = express.Router()
 

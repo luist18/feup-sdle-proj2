@@ -45,7 +45,7 @@ class AuthManager {
    * @param {string} username the username to lookup
    * @returns the username's public key
    */
-  getKeyByUsermame(username) {
+  getKeyByUsername(username) {
     return this._db.get(username)
   }
 
@@ -78,8 +78,6 @@ class AuthManager {
     this.publicKey = publicKey
     this.privateKey = privateKey
   }
-
-
 
   // creates new database
   createDatabase(username) {

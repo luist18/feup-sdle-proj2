@@ -148,7 +148,6 @@ export default class Peer {
 
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
-    console.log("ID: " + this.id())
     return true
   }
 

@@ -52,12 +52,14 @@ export async function start(req, res) {
     if (privateKey) {
       // if the user inserts its private key, then it is supposed to login
       if (!(await peer.login(privateKey))) {
+        await peer.stop()
         return res
           .status(rest.status.UNAUTHORIZED)
           .json({ message: rest.message.credentials.INVALID })
       } // if the credentials (username + pk) are incorrect
     } else {
       if (!(await peer.createCredentials())) {
+        await peer.stop()
         return res
           .status(rest.status.CONFLICT)
           .json({ message: rest.message.username.ALREADY_EXISTS })
@@ -175,4 +177,13 @@ export function database(req, res) {
       entries: peer.authManager.getDatabaseEntries()
     }
   })
+}
+
+export function remove(req, res) {
+  const peer = req.app.get('peer')
+
+  peer.authManager.delete(peer.username)
+  peer.notices.publishDbDelete(peer.username, peer.authManager.getDatabaseId())
+
+  return res.status(rest.status.OK).json({ message: rest.message.peer.REMOVED })
 }

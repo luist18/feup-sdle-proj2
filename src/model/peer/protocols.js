@@ -234,7 +234,7 @@ export default class Protocols {
         const { username, signature } = data
 
         // verifies if the username exists
-        const userPublicKey = this.peer.authManager.getKeyByUsermame(username)
+        const userPublicKey = this.peer.authManager.getKeyByUsername(username)
         const databaseId = this.peer.authManager.getDatabaseId()
 
         if (!userPublicKey) {

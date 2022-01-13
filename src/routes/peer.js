@@ -9,11 +9,13 @@ import {
   unsubscribe,
   post,
   token,
-  database
+  database,
+  remove
 } from '../controller/peer.controller.js'
 
 const router = express.Router()
 
+router.delete('/remove', validateOnlineStatus, remove)
 router.delete('/stop', validateOnlineStatus, stop)
 router.delete('/unsubscribe', validateOnlineStatus, unsubscribe)
 

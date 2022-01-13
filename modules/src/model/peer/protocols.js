@@ -1,8 +1,7 @@
 import { pipe } from 'it-pipe'
 import Database from '../auth/database.js'
 import Message from '../message/index.js'
-import SignatureManager from './signitureManager.js'
-
+import SignatureUtils from './signatureUtils.js'
 
 // protocols are messages exchanged between single peers
 export default class Protocols {
@@ -121,7 +120,7 @@ export default class Protocols {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = SignatureManager.sign(username, privateKey);
+    const signature = SignatureUtils.sign(username, privateKey)
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
@@ -209,7 +208,7 @@ export default class Protocols {
 
       if (!userPublicKey) { return { credentialsCorrect: false, databaseId } }
 
-      const credentialsCorrect = SignatureManager.verify(username, signature, userPublicKey)
+      const credentialsCorrect = SignatureUtils.verify(username, signature, userPublicKey)
       return { credentialsCorrect, databaseId }
     })
 

@@ -10,9 +10,9 @@ import Protocols from './protocols.js'
 import peerConfig from '../../config/peer.js'
 
 import TimelineManager from '../timeline/index.js'
-import SignatureManager from './signitureManager.js'
-import SubscriptionManager from "./subscriptionManager.js";
-import AuthManager from "../auth/index.js";
+import SignatureUtils from './signatureUtils.js'
+import SubscriptionManager from './subscriptionManager.js'
+import AuthManager from '../auth/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -279,15 +279,13 @@ export default class Peer {
     return true
   }
 
-
   async send(message) {
-
-    const signature = SignatureManager.sign(
+    const signature = SignatureUtils.sign(
       message,
       this.authManager.privateKey
-    );
+    )
 
-    const data = {message, signature}
+    const data = { message, signature }
 
     await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
 

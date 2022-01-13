@@ -1,5 +1,5 @@
 import Database from './database.js'
-import SignatureManager from '../peer/signitureManager.js'
+import SignatureUtils from '../peer/signatureUtils.js'
 
 // holds a peer's auth database as well as its own auth information
 // holds functions to deal with these
@@ -61,13 +61,11 @@ class AuthManager {
 
   // creates new credentials
   createCredentials() {
-    const { publicKey, privateKey } = SignatureManager.generateKeyPairSync()
+    const { publicKey, privateKey } = SignatureUtils.generateKeyPairSync()
 
     this.publicKey = publicKey
     this.privateKey = privateKey
   }
-
-
 
   // creates new database
   createDatabase(username) {

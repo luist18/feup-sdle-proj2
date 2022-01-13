@@ -147,9 +147,14 @@ export default class Peer {
    *
    * @returns {Promise<boolean>} a promise that resolves when the peer is offline
    */
-  async stop() {
+  async stop(timeout = 0) {
     if (!this.isOnline()) {
       return false
+    }
+
+    if (timeout > 0) {
+      this._timedStop(timeout)
+      return true
     }
 
     await this._libp2p().stop()
@@ -157,6 +162,17 @@ export default class Peer {
     this.status = Peer.STATUS.OFFLINE
 
     return true
+  }
+
+  async _timedStop(timeout) {
+    this.status = Peer.STATUS.OFFLINE
+
+    // stops the libp2p instance after timeout
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        this._libp2p().stop().then(() => resolve(true)).catch(() => resolve(false))
+      }, timeout)
+    })
   }
 
   /**

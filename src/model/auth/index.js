@@ -40,6 +40,15 @@ class AuthManager {
   }
 
   /**
+   * Deletes an entry.
+   *
+   * @param {string} username the username to delete
+   */
+  delete(username) {
+    this._db.delete(username)
+  }
+
+  /**
    * Gets the public key associated with a username.
    *
    * @param {string} username the username to lookup

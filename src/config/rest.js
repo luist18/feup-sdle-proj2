@@ -36,7 +36,8 @@ export default {
       ALREADY_OFFLINE: 'Peer is already offline',
       STARTED: 'Peer started',
       STOPPED: 'Peer stopped',
-      OFFLINE: 'Peer is offline'
+      OFFLINE: 'Peer is offline',
+      REMOVED: 'Username removed from network'
     },
 
     token: {

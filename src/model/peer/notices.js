@@ -10,35 +10,40 @@ export default class Notices {
   }
 
   subscribeAll() {
-    this.subscribeNotice(
-      topics.topic(topics.prefix.NOTICE, 'db', 'post'),
-      this.handleDbPost
-    )
+    this._subscribeNotice(topics.topic(topics.prefix.NOTICE, 'db', 'post'), this._handleDbPost)
+    this._subscribeNotice(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), this._handleDbDelete)
   }
 
-  publishDbPost(username, publicKey, databaseId) {
-    this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
+  async publishDbPost(username, publicKey, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
       username,
       publicKey,
       databaseId
     })
   }
 
-  publish(channel, body) {
+  async publishDbDelete(username, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
+      username,
+      databaseId
+    })
+  }
+
+  async publish(channel, body) {
     const message = this.peer.messageBuilder.build(body)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
-    this.peer.libp2p.pubsub.publish(
+    await this.peer.libp2p.pubsub.publish(
       channel,
       uint8ArrayFromString(JSON.stringify(message))
     )
   }
 
-  subscribeNotice(channel, handler) {
+  _subscribeNotice(channel, handler) {
     this.peer.libp2p.pubsub.on(channel, handler.bind(this))
     this.peer.libp2p.pubsub.subscribe(channel)
   }
 
-  handleDbPost(msg) {
+  _handleDbPost(msg) {
     console.log('received notice:db:post')
 
     const json = JSON.parse(uint8ArrayToString(msg.data))
@@ -54,5 +59,23 @@ export default class Notices {
     }
 
     this.peer.authManager.setEntry(username, publicKey)
+  }
+
+  _handleDbDelete(msg) {
+    console.log('received notice:db:delete')
+
+    const json = JSON.parse(uint8ArrayToString(msg.data))
+    const message = Message.fromJson(json)
+
+    // TODO accept IDs that are not the one exactly above
+    //     if it is even higher, question about the updated database
+    //     if it is lower, do something as well
+
+    const { username, databaseId } = message.data
+    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
+      return
+    }
+
+    this.peer.authManager.delete(username)
   }
 }

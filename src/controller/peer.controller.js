@@ -185,7 +185,5 @@ export function remove(req, res) {
   peer.authManager.delete(peer.username)
   peer.notices.publishDbDelete(peer.username, peer.authManager.getDatabaseId())
 
-  peer.stop()
-
   return res.status(rest.status.OK).json({ message: rest.message.peer.REMOVED })
 }

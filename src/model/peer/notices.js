@@ -14,25 +14,25 @@ export default class Notices {
     this._subscribeNotice(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), this._handleDbDelete)
   }
 
-  publishDbPost(username, publicKey, databaseId) {
-    this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
+  async publishDbPost(username, publicKey, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
       username,
       publicKey,
       databaseId
     })
   }
 
-  publishDbDelete(username, databaseId) {
-    this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
+  async publishDbDelete(username, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
       username,
       databaseId
     })
   }
 
-  publish(channel, body) {
+  async publish(channel, body) {
     const message = this.peer.messageBuilder.build(body)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
-    this.peer.libp2p.pubsub.publish(
+    await this.peer.libp2p.pubsub.publish(
       channel,
       uint8ArrayFromString(JSON.stringify(message))
     )

@@ -1,4 +1,4 @@
-import SignatureUtils from './signatureUtils.js'
+import * as SignatureUtils from './signatureUtils.js'
 
 export default class SubscriptionManager {
   handlePost(username, message) {

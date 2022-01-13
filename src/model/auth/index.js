@@ -1,5 +1,5 @@
 import Database from './database.js'
-import SignatureUtils from '../peer/signatureUtils.js'
+import * as SignatureUtils from '../peer/signatureUtils.js'
 
 // holds a peer's auth database as well as its own auth information
 // holds functions to deal with these

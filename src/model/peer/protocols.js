@@ -1,7 +1,8 @@
 import { pipe } from 'it-pipe'
 import Database from '../auth/database.js'
 import Message from '../message/index.js'
-import SignatureUtils from './signatureUtils.js'
+import * as SignatureUtils from './signatureUtils.js'
+import topics from '../message/topics.js'
 
 // protocols are messages exchanged between single peers
 export default class Protocols {
@@ -55,7 +56,7 @@ export default class Protocols {
         // Write to the stream, and pass its output to the next function
         stream,
         // Sink function
-        async (source) => {
+        async(source) => {
           for await (const data of source) {
             console.log(`received answer: ${data}`)
             res = sink(data)
@@ -88,7 +89,7 @@ export default class Protocols {
         neighbor,
         topics.topic(topics.prefix.PROTOCOL, 'has-username'),
         { username: username },
-        async (data) => {
+        async(data) => {
           // deals with the reply
           const json = JSON.parse(data)
           const rep = Message.fromJson(json)
@@ -115,7 +116,7 @@ export default class Protocols {
       peerId,
       topics.topic(topics.prefix.PROTOCOL, 'database'),
       {},
-      async (data) => {
+      async(data) => {
         const json = JSON.parse(data)
         const message = Message.fromJson(json)
 
@@ -147,7 +148,7 @@ export default class Protocols {
           username: username,
           signature: signature
         },
-        async (data) => {
+        async(data) => {
           // deals with the reply
           const json = JSON.parse(data)
           const message = Message.fromJson(json)
@@ -179,7 +180,7 @@ export default class Protocols {
   // returns the object that was returned by the handler function
   async receive(stream, handler) {
     let object = null
-    await pipe(stream, async function (source) {
+    await pipe(stream, async function(source) {
       for await (const msg of source) {
         const json = JSON.parse(msg)
         const message = Message.fromJson(json)

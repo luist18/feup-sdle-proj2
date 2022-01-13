@@ -5,7 +5,7 @@ import kadDHT from 'libp2p-kad-dht'
 import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
@@ -299,8 +299,7 @@ export default class Peer {
     return true
   }
 
-  async send(message) {
-
+  async send(content) {
     const post = this.messageBuilder.buildPost(content)
 
     await this._libp2p().pubsub.publish(

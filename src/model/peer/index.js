@@ -321,4 +321,8 @@ export default class Peer {
 
     console.log(`User ${this.username} published message ${content}`)
   }
+
+  getMessagesFromUser(username){
+    return this.timeline.getMessagesFromUser(username)
+  }
 }

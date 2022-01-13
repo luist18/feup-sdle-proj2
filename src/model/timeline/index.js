@@ -19,4 +19,8 @@ export default class TimelineManager {
 
     console.log(`User ${username} posted ${message}`)
   }
+
+  getMessagesFromUser(username) {
+    return this.messages.get(username)
+  }
 }

@@ -83,6 +83,36 @@ describe('auth test', () => {
     5 * 15000
   )
 
+    test(
+      'Peer 1 subscribes to Peer 0, Peer 0 posts a message and Peer 1 receives it',
+      (done) => {
+        request(apps[1])
+          .put('/peer/subscribe')
+          .send({ username: 'peer0' })
+          .then((res) => {
+            expect(res.statusCode).toBe(200)
+
+            Promise.all(
+              apps.slice(1).map((app) =>
+                request(app)
+                  .post('/peer/post')
+                  .send({ message: 'Hello, world!' })
+                  .then((res) => {
+                    expect(res.statusCode).toBe(201)
+                    expect(
+                      apps[0].get('peer').getMessagesFromUser().length
+                    ).toBe(1)
+                    expect(apps[0].get('peer').getMessagesFromUser()).toContain(
+                      'Hello, world!'
+                    )
+                  })
+              )
+            ).then(() => done())
+          })
+      },
+      5 * 1000
+    )
+
   test(
     'turn off apps 🛑',
     (done) => {

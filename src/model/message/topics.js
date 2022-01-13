@@ -2,7 +2,8 @@ const config = {
   prefix: {
     NOTICE: 'notice',
     PROTOCOL: 'protocol',
-    POST: 'post'
+    POST: 'post',
+    CACHE: 'cache'
   },
 
   SEPARATOR: '/'

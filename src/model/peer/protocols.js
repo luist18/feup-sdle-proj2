@@ -45,7 +45,8 @@ export default class Protocols {
   // sink: function that receives a Message
   // returns whatever sink returns or null
   async send(stream, body, sink = null) {
-    const message = this.peer.messageBuilder.build(body)
+    // todo: create a specific build function for protocol
+    const message = this.peer.messageBuilder.build(body, 'protocol')
 
     let res = null
 

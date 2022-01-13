@@ -10,8 +10,14 @@ export default class Notices {
   }
 
   subscribeAll() {
-    this._subscribeNotice(topics.topic(topics.prefix.NOTICE, 'db', 'post'), this._handleDbPost)
-    this._subscribeNotice(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), this._handleDbDelete)
+    this._subscribeNotice(
+      topics.topic(topics.prefix.NOTICE, 'db', 'post'),
+      this._handleDbPost
+    )
+    this._subscribeNotice(
+      topics.topic(topics.prefix.NOTICE, 'db', 'delete'),
+      this._handleDbDelete
+    )
   }
 
   async publishDbPost(username, publicKey, databaseId) {
@@ -30,7 +36,8 @@ export default class Notices {
   }
 
   async publish(channel, body) {
-    const message = this.peer.messageBuilder.build(body)
+    // todo create a specific build for a notice
+    const message = this.peer.messageBuilder.build(body, 'notice')
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
     await this.peer.libp2p.pubsub.publish(
       channel,

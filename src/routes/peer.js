@@ -10,7 +10,8 @@ import {
   post,
   token,
   database,
-  remove
+  remove,
+  cache
 } from '../controller/peer.controller.js'
 
 const router = express.Router()
@@ -19,8 +20,9 @@ router.delete('/remove', validateOnlineStatus, remove)
 router.delete('/stop', validateOnlineStatus, stop)
 router.delete('/unsubscribe', validateOnlineStatus, unsubscribe)
 
+router.get('/cache', validateOnlineStatus, cache)
 router.get('/database', validateOnlineStatus, database)
-router.get('/status', validateOnlineStatus, status)
+router.get('/status', status)
 router.get('/token', validateOnlineStatus, token)
 
 router.post('/post', validateOnlineStatus, post)

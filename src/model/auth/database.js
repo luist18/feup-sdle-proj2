@@ -19,6 +19,11 @@ class Database {
   get(username) {
     return this.entries[username]
   }
+
+  delete(username) {
+    delete this.entries[username]
+    this.id++
+  }
 }
 
 export default Database

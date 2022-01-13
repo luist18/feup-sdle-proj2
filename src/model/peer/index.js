@@ -5,11 +5,13 @@ import kadDHT from 'libp2p-kad-dht'
 import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
-
+import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import CacheProtocol from './protocol/cache.protocol.js'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
+import Cache from './cache.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
@@ -49,6 +51,10 @@ export default class Peer {
 
     this.subManager = new SubscriptionManager(this)
     this.messageBuilder = new MessageBuilder(this.username)
+
+    this.cache = new Cache()
+
+    this.cacheProtocol = new CacheProtocol(this)
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
 
@@ -138,6 +144,7 @@ export default class Peer {
 
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
+    this.cacheProtocol.register()
 
     return true
   }
@@ -170,7 +177,10 @@ export default class Peer {
     // stops the libp2p instance after timeout
     return new Promise((resolve) => {
       setTimeout(() => {
-        this._libp2p().stop().then(() => resolve(true)).catch(() => resolve(false))
+        this._libp2p()
+          .stop()
+          .then(() => resolve(true))
+          .catch(() => resolve(false))
       }, timeout)
     })
   }
@@ -276,7 +286,10 @@ export default class Peer {
     }
 
     // Adds listener
-    this._libp2p().pubsub.on(username, this.subManager.handlePost.bind(this, username))
+    this._libp2p().pubsub.on(
+      topics.topic(topics.prefix.POST, username),
+      ({ data }) => this._handlePost(data).bind(this)
+    )
 
     // Adds to followed to users
     this.followedUsers.push(username)
@@ -299,8 +312,33 @@ export default class Peer {
     return true
   }
 
-  async send(content) {
+  _storePost(message) {
+    this.timeline.add(message)
+    this.cache.add(message)
+  }
+
+  /**
+   * Handles a received post message.
+   *
+   * @param {Object} data the data
+   */
+  async _handlePost(data) {
+    const raw = uint8ArrayToString(data)
+
+    const message = JSON.parse(raw)
+
+    // TODO: verify authenticity
+
+    this._storePost(message)
+
+    // send the post to neighbors to cache it
+    this.cacheProtocol.add(message)
+  }
+
+  async post(content) {
     const post = this.messageBuilder.buildPost(content)
+
+    // TODO: sign data
 
     await this._libp2p().pubsub.publish(
       topics.topic(topics.prefix.POST, this.username),

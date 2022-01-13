@@ -1,22 +1,20 @@
 /**
- * This class stores all messages from all other peers, in chronological order
+ * This class stores all posts from all other peers
  */
 export default class TimelineManager {
   constructor() {
-    this.messages = new Map()
+    this.posts = new Map()
   }
 
-  addMessage(username, message) {
-    if (!this.messages.has(username)) {
-      this.messages.set(username, [])
+  add(message) {
+    const { user } = message.data
+
+    if (!this.posts.has(user)) {
+      this.posts.set(user, [])
     }
 
-    const messagesFromUser = this.messages.get(username)
+    const userPosts = this.posts.get(user)
 
-    messagesFromUser.push(message)
-
-    this.messages.set(username, messagesFromUser)
-
-    console.log(`User ${username} posted ${message}`)
+    userPosts.push(message)
   }
 }

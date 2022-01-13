@@ -3,7 +3,7 @@ import rest from '../config/rest.js'
 export async function status(req, res) {
   const peer = req.app.get('peer')
 
-  console.log(peer.timeline.messages)
+  const status = peer.status
 
   return res.status(rest.status.OK).json({ message: status })
 }
@@ -156,7 +156,7 @@ export async function post(req, res) {
       .json({ error: rest.message.body.missing('message') })
   }
 
-  await peer.send(message)
+  await peer.post(message)
 
   return res
     .status(rest.status.CREATED)
@@ -177,6 +177,14 @@ export function database(req, res) {
       id: peer.authManager.getDatabaseId(),
       entries: peer.authManager.getDatabaseEntries()
     }
+  })
+}
+
+export function cache(req, res) {
+  const peer = req.app.get('peer')
+
+  return res.status(rest.status.OK).json({
+    cache: Object.fromEntries(peer.cache.cache)
   })
 }
 

@@ -67,7 +67,7 @@ describe('auth test', () => {
 
   test(
     'check if indirectly connected apps have information about each other',
-    async() => {
+    async () => {
       await new Promise((resolve) => {
         setTimeout(() => {
           expect(
@@ -89,41 +89,48 @@ describe('auth test', () => {
     5 * 15000
   )
 
-    test(
-      'Peer 1 subscribes to Peer 0, Peer 0 posts a message and Peer 1 receives it',
-      (done) => {
-        request(apps[1])
-          .put('/peer/subscribe')
-          .send({ username: 'peer0' })
-          .then((res) => {
-            expect(res.statusCode).toBe(201)
-            expect(apps[1].get('peer').followedUsers).toContain("peer0")
+  test(
+    'Peer 1 subscribes to Peer 0, Peer 0 posts a message and Peer 1 receives it',
+    (done) => {
+      request(apps[1])
+        .put('/peer/subscribe')
+        .send({ username: 'peer0' })
+        .then((res) => {
+          expect(res.statusCode).toBe(201)
+          expect(apps[1].get('peer').followedUsers).toContain('peer0')
 
-            Promise.all(
-              apps.slice(0).map((app) =>
-                request(app)
-                  .post('/peer/post')
-                  .send({ message: 'Hello, world!' })
-                  .then((res) => {
-                    expect(res.statusCode).toBe(201)
-                    sleep(5 * 1000)
-                    
-                    expect(
-                      apps[1].get('peer').timeline.getMessages().size
-                    ).toBe(1)
-                    expect(
-                      apps[1].get('peer').getMessagesFromUser("peer0").length
-                    ).toBe(1)
-                    expect(
-                      apps[1].get('peer').getMessagesFromUser('peer0')
-                    ).toContain('Hello, world!')
-                  })
-              )
-            ).then(() => done())
-          })
-      },
-      10 * 1000
-    )
+          Promise.all(
+            apps.slice(0).map((app) =>
+              request(app)
+                .post('/peer/post')
+                .send({ message: 'Hello, world!' })
+                .then((res) => {
+                  expect(res.statusCode).toBe(201)
+                  async () => {
+                    await new Promise((resolve) => {
+                      setTimeout(() => {
+                        expect(
+                          apps[1].get('peer').timeline.getMessages().size
+                        ).toBe(1)
+                        expect(
+                          apps[1].get('peer').getMessagesFromUser('peer0')
+                            .length
+                        ).toBe(1)
+                        expect(
+                          apps[1].get('peer').getMessagesFromUser('peer0')
+                        ).toContain('Hello, world!')
+                        resolve()
+                      }, 10000)
+                    })
+                  }
+                })
+             
+            )
+          ).then(() => done())
+        })
+    },
+    12 * 1000
+  )
 
   test(
     'turn off apps 🛑',

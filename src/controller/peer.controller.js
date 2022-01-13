@@ -52,14 +52,14 @@ export async function start(req, res) {
     if (privateKey) {
       // if the user inserts its private key, then it is supposed to login
       if (!(await peer.login(privateKey))) {
-        peer.stop()
+        await peer.stop()
         return res
           .status(rest.status.UNAUTHORIZED)
           .json({ message: rest.message.credentials.INVALID })
       } // if the credentials (username + pk) are incorrect
     } else {
       if (!(await peer.createCredentials())) {
-        peer.stop()
+        await peer.stop()
         return res
           .status(rest.status.CONFLICT)
           .json({ message: rest.message.username.ALREADY_EXISTS })

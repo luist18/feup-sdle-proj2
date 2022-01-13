@@ -117,12 +117,12 @@ describe('auth test', () => {
                             .length
                         ).toBe(1)
                         expect(
-                          apps[1].get('peer').getMessagesFromUser('peer0')
-                        ).toContain('Hello, world!')
+                          apps[1].get('peer').getMessagesFromUser('peer0')[0].content
+                        ).toBe('Hello, world!')
                         resolve()
                       }, 10000)
                     })
-                  }
+                  } 
                 })
              
             )

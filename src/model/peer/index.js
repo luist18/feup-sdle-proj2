@@ -284,7 +284,7 @@ export default class Peer {
         // }
 
         // Adds message to the timeline
-        this.timeline.addMessage(username, post.message)
+        this.timeline.addMessage(username, post.data.content)
       }
     )
 

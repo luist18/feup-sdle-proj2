@@ -6,6 +6,12 @@ function createApps(number) {
   return [...Array(number).keys()].map((i) => App(`peer${i}`, 7000 + i))
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 describe('auth test', () => {
   const apps = createApps(3)
 
@@ -26,7 +32,7 @@ describe('auth test', () => {
         .then(() => done())
         .catch((err) => done(err))
     },
-    10 * 1000
+    3 * 1000
   )
 
   test(
@@ -56,7 +62,7 @@ describe('auth test', () => {
             .catch((err) => done(err))
         })
     },
-    20 * 1000
+    3 * 1000
   )
 
   test(
@@ -90,27 +96,33 @@ describe('auth test', () => {
           .put('/peer/subscribe')
           .send({ username: 'peer0' })
           .then((res) => {
-            expect(res.statusCode).toBe(200)
+            expect(res.statusCode).toBe(201)
+            expect(apps[1].get('peer').followedUsers).toContain("peer0")
 
             Promise.all(
-              apps.slice(1).map((app) =>
+              apps.slice(0).map((app) =>
                 request(app)
                   .post('/peer/post')
                   .send({ message: 'Hello, world!' })
                   .then((res) => {
                     expect(res.statusCode).toBe(201)
+                    sleep(5 * 1000)
+                    
                     expect(
-                      apps[0].get('peer').getMessagesFromUser().length
+                      apps[1].get('peer').timeline.getMessages().size
                     ).toBe(1)
-                    expect(apps[0].get('peer').getMessagesFromUser()).toContain(
-                      'Hello, world!'
-                    )
+                    expect(
+                      apps[1].get('peer').getMessagesFromUser("peer0").length
+                    ).toBe(1)
+                    expect(
+                      apps[1].get('peer').getMessagesFromUser('peer0')
+                    ).toContain('Hello, world!')
                   })
               )
             ).then(() => done())
           })
       },
-      5 * 1000
+      10 * 1000
     )
 
   test(

@@ -6,17 +6,17 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-
 import CacheProtocol from './protocol/cache.protocol.js'
+import peerConfig from '../../config/peer.js'
+import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
 import Protocols from './protocols.js'
 import Cache from './cache.js'
-import peerConfig from '../../config/peer.js'
-import AuthManager from '../auth/index.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
 import TimelineManager from '../timeline/index.js'
+import SubscriptionManager from './subscriptionManager.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -49,6 +49,7 @@ export default class Peer {
     this.authManager = new AuthManager()
     this.postManager = new PostManager()
 
+    this.subManager = new SubscriptionManager(this)
     this.messageBuilder = new MessageBuilder(this.username)
 
     this.cache = new Cache()

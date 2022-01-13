@@ -1,10 +1,8 @@
 import { pipe } from 'it-pipe'
 import Database from '../auth/database.js'
 import Message from '../message/index.js'
-import * as crypto from 'crypto'
+import * as SignatureUtils from './signatureUtils.js'
 import topics from '../message/topics.js'
-
-const SIGN_ALGORITHM = 'SHA256'
 
 // protocols are messages exchanged between single peers
 export default class Protocols {
@@ -140,9 +138,7 @@ export default class Protocols {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = crypto
-      .sign(SIGN_ALGORITHM, Buffer.from(username), privateKey)
-      .toString('base64')
+    const signature = SignatureUtils.sign(username, privateKey)
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {
@@ -242,11 +238,10 @@ export default class Protocols {
           return { credentialsCorrect: false, databaseId }
         }
 
-        const credentialsCorrect = crypto.verify(
-          SIGN_ALGORITHM,
-          Buffer.from(username),
-          userPublicKey,
-          Buffer.from(signature, 'base64')
+        const credentialsCorrect = SignatureUtils.verify(
+          username,
+          signature,
+          userPublicKey
         )
         return { credentialsCorrect, databaseId }
       }

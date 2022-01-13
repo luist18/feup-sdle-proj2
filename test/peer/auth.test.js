@@ -6,12 +6,6 @@ function createApps(number) {
   return [...Array(number).keys()].map((i) => App(`peer${i}`, 7000 + i))
 }
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
 describe('auth test', () => {
   const apps = createApps(3)
 
@@ -67,7 +61,7 @@ describe('auth test', () => {
 
   test(
     'check if indirectly connected apps have information about each other',
-    async () => {
+    async() => {
       await new Promise((resolve) => {
         setTimeout(() => {
           expect(
@@ -106,25 +100,23 @@ describe('auth test', () => {
                 .send({ message: 'Hello, world!' })
                 .then((res) => {
                   expect(res.statusCode).toBe(201)
-                  async () => {
-                    await new Promise((resolve) => {
-                      setTimeout(() => {
-                        expect(
-                          apps[1].get('peer').timeline.getMessages().size
-                        ).toBe(1)
-                        expect(
-                          apps[1].get('peer').getMessagesFromUser('peer0')
-                            .length
-                        ).toBe(1)
-                        expect(
-                          apps[1].get('peer').getMessagesFromUser('peer0')[0].content
-                        ).toBe('Hello, world!')
-                        resolve()
-                      }, 10000)
-                    })
-                  } 
+                  Promise((resolve) => {
+                    setTimeout(() => {
+                      expect(
+                        apps[1].get('peer').timeline.getMessages().size
+                      ).toBe(1)
+                      expect(
+                        apps[1].get('peer').getMessagesFromUser('peer0')
+                          .length
+                      ).toBe(1)
+                      expect(
+                        apps[1].get('peer').getMessagesFromUser('peer0')[0].content
+                      ).toBe('Hello, world!')
+                      resolve()
+                    }, 10000)
+                  })
                 })
-             
+
             )
           ).then(() => done())
         })

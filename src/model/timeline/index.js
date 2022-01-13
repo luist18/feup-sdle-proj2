@@ -23,5 +23,6 @@ export default class TimelineManager {
   getMessagesFromUser(username) {
     return this.messages.get(username)
   }
-  getMessages(){return this.messages}
+
+  getMessages() { return this.messages }
 }

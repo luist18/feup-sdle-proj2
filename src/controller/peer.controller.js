@@ -179,11 +179,16 @@ export function database(req, res) {
   })
 }
 
-export function remove(req, res) {
+export async function remove(req, res) {
   const peer = req.app.get('peer')
 
   peer.authManager.delete(peer.username)
-  peer.notices.publishDbDelete(peer.username, peer.authManager.getDatabaseId())
+  await peer.notices.publishDbDelete(
+    peer.username,
+    peer.authManager.getDatabaseId()
+  )
+
+  peer.stop(2 * 1000)
 
   return res.status(rest.status.OK).json({ message: rest.message.peer.REMOVED })
 }

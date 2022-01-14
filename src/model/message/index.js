@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import * as signature from '../peer/signatureUtils.js'
 
 // wrapper for exchanged messages between peers
 // in the future can hold things like IDs or timestamps
@@ -42,13 +43,32 @@ export default class Message {
   }
 
   /**
+   * Updates the username of the message.
+   *
+   * @param {string} username the username of the peer
+   */
+  updateUser(username) {
+    this._metadata.from = username
+  }
+
+  /**
+   * Signs the message, adding a signature to the metadata.
+   * The signature is made over the whole data body.
+   *
+   * @param {string} privateKey the private key of the peer
+   */
+  sign(privateKey) {
+    this._metadata.signature = signature.signObject(this.data, privateKey)
+  }
+
+  /**
    * Converts a json object into a Message object.
    *
    * @param {object} json the json object to convert to a message
-   * @returns the message object
+   * @returns {Message} the message object
    */
   static fromJson(json) {
-    return new Message(
+    const message = new Message(
       json.data,
       json._metadata.type,
       json._metadata.owner,
@@ -57,5 +77,8 @@ export default class Message {
       json._metadata.sentTimestamp,
       json._metadata.id
     )
+    message.data = json.data
+    message._metadata = json._metadata
+    return message
   }
 }

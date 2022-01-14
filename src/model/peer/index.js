@@ -17,6 +17,8 @@ import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
 import TimelineManager from '../timeline/index.js'
 import SubscriptionManager from './subscriptionManager.js'
+import * as signature from '../peer/signatureUtils.js'
+import Message from '../message/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -50,7 +52,7 @@ export default class Peer {
     this.postManager = new PostManager()
 
     this.subManager = new SubscriptionManager(this)
-    this.messageBuilder = new MessageBuilder(this.username)
+    this.messageBuilder = new MessageBuilder(this)
 
     this.cache = new Cache()
 
@@ -325,9 +327,18 @@ export default class Peer {
   async _handlePost(data) {
     const raw = uint8ArrayToString(data)
 
-    const message = JSON.parse(raw)
+    let message = JSON.parse(raw)
+    message = Message.fromJson(message)
 
-    // TODO: verify authenticity
+    const publicKey = this.authManager.getKeyByUsername(message.data.user)
+    if (!publicKey) {
+      throw new Error(peerConfig.error.USERNAME_NOT_FOUND)
+    }
+
+    if (!signature.verifyObject(message.data, message._metadata.signature, publicKey)) {
+      console.log(`Invalid signature for post from ${message._metadata.username}`)
+      return
+    }
 
     this._storePost(message)
 
@@ -337,8 +348,6 @@ export default class Peer {
 
   async post(content) {
     const post = this.messageBuilder.buildPost(content)
-
-    // TODO: sign data
 
     await this._libp2p().pubsub.publish(
       topics.topic(topics.prefix.POST, this.username),

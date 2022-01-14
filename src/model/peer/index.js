@@ -26,7 +26,7 @@ const PEER_STATUS = {
   OFFLINE: 'offline'
 }
 
-const jsonPath = './src/model/peer/'
+const jsonPath = './src/model/peer/metadata/'
 
 export default class Peer {
   /**

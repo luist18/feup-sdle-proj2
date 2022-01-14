@@ -30,10 +30,10 @@ export async function start(req, res) {
   // TODO I think this could be refactored in the future
   if (!token) {
     // if the network is new, the user is also new, ignores the secret key
-    peer.authManager.createCredentials()
-    peer.authManager.createDatabase(username)
-
     await peer.start()
+
+    peer.authManager.createCredentials()
+    peer.authManager.createDatabase(username, peer.id().toB58String())
   } else {
     let started = false
     try {
@@ -200,4 +200,18 @@ export async function remove(req, res) {
   peer.stop(2 * 1000)
 
   return res.status(rest.status.OK).json({ message: rest.message.peer.REMOVED })
+}
+
+export async function profile(req, res) {
+  const peer = req.app.get('peer')
+
+  const { username } = req.body
+
+  try {
+    const data = await peer.profile(username)
+
+    return res.status(rest.status.OK).json({ data })
+  } catch (err) {
+    return res.status(rest.status.BAD_REQUEST).json({ message: err.message })
+  }
 }

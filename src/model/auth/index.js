@@ -1,5 +1,7 @@
+import PeerId from 'peer-id'
+
+import { generateKeyPairSync } from '../utils/signature.js'
 import Database from './database.js'
-import * as SignatureUtils from '../peer/signatureUtils.js'
 
 // holds a peer's auth database as well as its own auth information
 // holds functions to deal with these
@@ -55,7 +57,27 @@ class AuthManager {
    * @returns the username's public key
    */
   getKeyByUsername(username) {
-    return this._db.get(username)
+    return this._db.get(username).publicKey
+  }
+
+  /**
+   * Gets the B58 string of the username.
+   *
+   * @param {string} username the username
+   * @returns {string} the B58 string of the peer id
+   */
+  getB58IdByUsername(username) {
+    return this._db.get(username).peerId
+  }
+
+  /**
+   * Gets the PeerId of a username.
+   *
+   * @param {string} username the username
+   * @returns {PeerId} the peer id
+   */
+  getIdByUsername(username) {
+    return PeerId.createFromB58String(this.getB58IdByUsername(username))
   }
 
   /**
@@ -63,24 +85,25 @@ class AuthManager {
    *
    * @param {string} username the username
    * @param {string} publicKey the public key
+   * @param {string} peerId the peer id
    */
-  setEntry(username, publicKey) {
-    this._db.set(username, publicKey)
+  setEntry(username, publicKey, peerId) {
+    this._db.set(username, publicKey, peerId)
   }
 
   // creates new credentials
   createCredentials() {
-    const { publicKey, privateKey } = SignatureUtils.generateKeyPairSync()
+    const { publicKey, privateKey } = generateKeyPairSync()
 
     this.publicKey = publicKey
     this.privateKey = privateKey
   }
 
   // creates new database
-  createDatabase(username) {
+  createDatabase(username, peerId) {
     this._db = new Database()
 
-    this._db.set(username, this.publicKey)
+    this._db.set(username, this.publicKey, peerId)
   }
 
   // sets the database
@@ -89,7 +112,7 @@ class AuthManager {
   }
 
   updateKeys(username, privateKey) {
-    this.publicKey = this._db.get(username)
+    this.publicKey = this._db.get(username).publicKey
     this.privateKey = privateKey
   }
 }

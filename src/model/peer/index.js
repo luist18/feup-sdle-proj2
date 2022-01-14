@@ -6,7 +6,9 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+
 import CacheProtocol from './protocol/cache.protocol.js'
+import ProfileProtocol from './protocol/profile.protocol.js'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Notices from './notices.js'
@@ -40,25 +42,26 @@ export default class Peer {
   constructor(username, port) {
     this.username = username
     this.port = port
-    this.followedUsers = []
 
     this.libp2p = null
 
     this.status = Peer.STATUS.OFFLINE
 
-    this.authManager = new AuthManager()
-    this.postManager = new PostManager()
-
-    this.subManager = new SubscriptionManager(this)
+    // message builder
     this.messageBuilder = new MessageBuilder(this.username)
 
+    // managers and cache
+    this.authManager = new AuthManager()
+    this.postManager = new PostManager()
+    this.subscriptionManager = new SubscriptionManager(this)
+    this.timeline = new TimelineManager()
     this.cache = new Cache()
 
-    this.cacheProtocol = new CacheProtocol(this)
+    // protocols
     this.protocols = new Protocols(this)
     this.notices = new Notices(this)
-
-    this.timeline = new TimelineManager()
+    this.cacheProtocol = new CacheProtocol(this)
+    this.profileProtocol = new ProfileProtocol(this)
   }
 
   /**
@@ -145,6 +148,7 @@ export default class Peer {
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
     this.cacheProtocol.register()
+    this.profileProtocol.register()
 
     return true
   }
@@ -241,7 +245,7 @@ export default class Peer {
     // TODO persistence
 
     // adds the user to the database
-    database.set(this.username, this.authManager.publicKey)
+    database.set(this.username, this.authManager.publicKey, this.id().toB58String())
 
     // sets it as the current database
     this.authManager.setDatabase(database)
@@ -280,21 +284,21 @@ export default class Peer {
       throw new Error(peerConfig.error.USERNAME_NOT_FOUND)
     }
 
-    // Assures idempotent subscribe
-    if (this.followedUsers.includes(username)) {
+    // assures idempotent subscribe
+    if (this.subscriptionManager.has(username)) {
       return false
     }
 
-    // Adds listener
+    // adds listener
     this._libp2p().pubsub.on(
       topics.topic(topics.prefix.POST, username),
       ({ data }) => this._handlePost(data).bind(this)
     )
 
-    // Adds to followed to users
-    this.followedUsers.push(username)
-
+    // subscribes to topic
     this._libp2p().pubsub.subscribe(topics.topic(topics.prefix.POST, username))
+
+    this.subscriptionManager.add(username)
 
     console.log(`User ${this.username} followed user ${username}`)
     return true
@@ -302,7 +306,7 @@ export default class Peer {
 
   async unsubscribe(username) {
     // Verifies if user is subscribed to the user that he wants to unsubscribe
-    if (!this.followedUsers.includes(username)) {
+    if (!this.subscriptionManager.has(username)) {
       return false
     }
 
@@ -348,5 +352,41 @@ export default class Peer {
     this.postManager.push(post)
 
     console.log(`User ${this.username} published message ${content}`)
+  }
+
+  async profile(username) {
+    // if self return own profile
+    if (username === undefined || username === this.username) {
+      return this.postManager.posts
+    }
+
+    if (!this.subscriptionManager.has(username)) {
+      throw new Error(peerConfig.error.NOT_FOLLOWING_USER)
+    }
+
+    // try to connect to the destination
+    // if not possible ask for more information,
+    // merge with the current information and return
+
+    if (!this.authManager.hasUsername(username)) {
+      throw new Error(peerConfig.error.USERNAME_NOT_FOUND)
+    }
+
+    const destinationId = this.authManager.getIdByUsername(username)
+
+    try {
+      this.connect(destinationId)
+
+      const message = await this.profileProtocol.request(username, destinationId)
+      const posts = message.data
+
+      this.timeline.replace(username, posts)
+
+      console.log(posts)
+
+      return this.timeline.get(username)
+    } catch (err) {
+      // asks for the data
+    }
   }
 }

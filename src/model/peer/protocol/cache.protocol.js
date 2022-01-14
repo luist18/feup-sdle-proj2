@@ -1,29 +1,18 @@
 import topics from '../../message/topics.js'
 
+import Protocol from './protocol.js'
 import { send, receive, trade } from '../communication/streaming.js'
 
-class CacheProtocol {
-  constructor(peer) {
-    this.peer = peer
-  }
-
+class CacheProtocol extends Protocol {
   register() {
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'add'),
       this._handleAdd.bind(this)
     )
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'get'),
       this._handleGetFromUser.bind(this)
     )
-  }
-
-  _subscribe(protocol, handler) {
-    this.peer._libp2p().handle(protocol, ({ stream }) => {
-      // TODO: replace with debug
-      console.log(`Received protocol ${protocol}`)
-      handler(stream).bind(this)
-    })
   }
 
   add(message) {

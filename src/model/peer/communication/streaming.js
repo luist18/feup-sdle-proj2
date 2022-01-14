@@ -11,6 +11,7 @@ import pipe from 'it-pipe'
 export async function send(stream, message) {
   return new Promise((resolve, reject) => {
     try {
+      console.log(`sending message: ${JSON.stringify(message)}`)
       message.updateTimestamp()
       pipe([JSON.stringify(message)], stream).then(() => resolve())
     } catch (error) {
@@ -31,6 +32,8 @@ export async function receive(stream) {
       pipe(stream, async(source) => {
         for await (const chunk of source) {
           const json = JSON.parse(chunk)
+          console.log(`received message: ${JSON.stringify(json)}`)
+
           const message = Message.fromJson(json)
           resolve(message)
         }

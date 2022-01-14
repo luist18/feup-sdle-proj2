@@ -24,7 +24,8 @@ export default class Notices {
     await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
       username,
       publicKey,
-      databaseId
+      databaseId,
+      peerId: this.peer.id().toB58String()
     })
   }
 
@@ -60,12 +61,13 @@ export default class Notices {
     //     if it is even higher, question about the updated database
     //     if it is lower, do something as well
 
-    const { username, publicKey, databaseId } = message.data
+    const { username, publicKey, databaseId, peerId } = message.data
+
     if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
       return
     }
 
-    this.peer.authManager.setEntry(username, publicKey)
+    this.peer.authManager.setEntry(username, publicKey, peerId)
   }
 
   _handleDbDelete(msg) {

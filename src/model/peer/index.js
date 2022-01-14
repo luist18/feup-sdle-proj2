@@ -17,7 +17,6 @@ import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
 import TimelineManager from '../timeline/index.js'
 import SubscriptionManager from './subscriptionManager.js'
-import * as signature from '../peer/signatureUtils.js'
 import Message from '../message/index.js'
 
 const PEER_STATUS = {

@@ -4,6 +4,7 @@ export async function status(req, res) {
   const peer = req.app.get('peer')
 
   const status = peer.status
+  console.log(peer.followedUsers)
 
   return res.status(rest.status.OK).json({ message: status })
 }

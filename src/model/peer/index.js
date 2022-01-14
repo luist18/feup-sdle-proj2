@@ -113,12 +113,21 @@ export default class Peer {
     if (this.isOnline()) {
       return false
     }
+
+    // Imports peerId, if exists
     let peerID
     try {
       peerID = await PeerId.createFromJSON(JSON.parse(readFileSync(`${jsonPath}${this.username}_id.json`)))
     } catch (err) {
-      console.log('Peer ID not found.')
-      console.log(err)
+      console.log('Peer ID file not found.')
+    }
+
+    try {
+      this.followedUsers = JSON.parse(
+        readFileSync(`${jsonPath}${this.username}_sub.json`)
+      )
+    } catch (err) {
+      console.log('Subscriptions file not found.')
     }
 
     this.libp2p = await libp2p.create({
@@ -160,11 +169,13 @@ export default class Peer {
     this.notices.subscribeAll()
     this.cacheProtocol.register()
 
+    // Stores subs in 5 second interval, if changes occurred
     const job = new cron.CronJob(
       '*/5 * * * * *',
       this.storeSubscriptions.bind(this)
     )
     job.start()
+
     return true
   }
 
@@ -377,7 +388,6 @@ export default class Peer {
   }
 
   storeSubscriptions() {
-    console.log('Executing Job')
     if (this.addedUser) {
       const subs = JSON.stringify(this.followedUsers)
       writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)

@@ -32,12 +32,12 @@ export default class Notices {
     await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
       username,
       databaseId
-    })
+    }, true)
   }
 
-  async publish(channel, body) {
+  async publish(channel, body, sign = false) {
     // todo create a specific build for a notice
-    const message = this.peer.messageBuilder.build(body, 'notice')
+    const message = this.peer.messageBuilder.build(body, 'notice', sign)
     console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
     await this.peer.libp2p.pubsub.publish(
       channel,
@@ -74,9 +74,10 @@ export default class Notices {
     const json = JSON.parse(uint8ArrayToString(msg.data))
     const message = Message.fromJson(json)
 
-    // TODO accept IDs that are not the one exactly above
-    //     if it is even higher, question about the updated database
-    //     if it is lower, do something as well
+    if (!this.peer.messageBuilder.isSigned(message)) {
+      console.log(`Message by ${message._metadata.owner} is not signed`)
+      return
+    }
 
     const { username, databaseId } = message.data
     if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {

@@ -330,13 +330,8 @@ export default class Peer {
     let message = JSON.parse(raw)
     message = Message.fromJson(message)
 
-    const publicKey = this.authManager.getKeyByUsername(message.data.user)
-    if (!publicKey) {
-      throw new Error(peerConfig.error.USERNAME_NOT_FOUND)
-    }
-
-    if (!signature.verifyObject(message.data, message._metadata.signature, publicKey)) {
-      console.log(`Invalid signature for post from ${message._metadata.username}`)
+    if (!this.messageBuilder.isSigned(message)) {
+      console.log(`Message by ${message._metadata.owner} is not signed`)
       return
     }
 

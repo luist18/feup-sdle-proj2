@@ -2,6 +2,7 @@ import Message from './index.js'
 import Post from './post.js'
 import Cached from './cached.js'
 import CacheRequest from './cacheRequest.js'
+import * as signature from '../peer/signatureUtils.js'
 
 /**
  * Builds messages to send.
@@ -29,7 +30,9 @@ export default class MessageBuilder {
    */
   build(data, type, sign) {
     const message = new Message(data, type, this.peer.username, Date.now())
-    if (sign) { message.sign(this.peer.privateKey) }
+    if (sign) {
+      message.sign(this.peer.privateKey)
+    }
     return message
   }
 
@@ -82,5 +85,30 @@ export default class MessageBuilder {
     message.updateTimestamp()
     message.updateUser(this.peer.username)
     return message
+  }
+
+  /**
+   * Verifies if the message is signed by the owner.
+   *
+   * @param {Message} message the message to verify if it is signed
+   * @returns {boolean} whether the message is signed
+   */
+  isSigned(message) {
+    if (!message._metadata.signature) {
+      return false
+    }
+
+    const owner = message._metadata.owner
+    const key = this.peer.authManager.getKeyByUsername(owner)
+
+    if (!key) {
+      return false
+    }
+
+    return signature.verifyObject(
+      message.data,
+      message._metadata.signature,
+      key
+    )
   }
 }

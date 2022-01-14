@@ -9,31 +9,28 @@ export default class Notices {
     this.peer = peer
   }
 
-  subscribeAll() {
-    this._subscribeNotice(
+  register() {
+    this._subscribe(
       topics.topic(topics.prefix.NOTICE, 'db', 'post'),
-      this._handleDbPost
+      this._handleDatabasePost
     )
-    this._subscribeNotice(
+    this._subscribe(
       topics.topic(topics.prefix.NOTICE, 'db', 'delete'),
-      this._handleDbDelete
+      this._handleDatabaseDelete
+    )
+    this._subscribe(
+      topics.topic(topics.prefix.NOTICE, 'profile', 'request'),
+      this._handleProfileRequest
     )
   }
 
-  async publishDbPost(username, publicKey, databaseId) {
-    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
-      username,
-      publicKey,
-      databaseId,
-      peerId: this.peer.id().toB58String()
+  _subscribe(channel, handler) {
+    this.peer.libp2p.pubsub.on(channel, (message) => {
+      const json = JSON.parse(uint8ArrayToString(message.data))
+      const parsedMessage = Message.fromJson(json)
+      handler(parsedMessage).bind(this)
     })
-  }
-
-  async publishDbDelete(username, databaseId) {
-    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
-      username,
-      databaseId
-    })
+    this.peer.libp2p.pubsub.subscribe(channel)
   }
 
   async publish(channel, body) {
@@ -46,16 +43,28 @@ export default class Notices {
     )
   }
 
-  _subscribeNotice(channel, handler) {
-    this.peer.libp2p.pubsub.on(channel, handler.bind(this))
-    this.peer.libp2p.pubsub.subscribe(channel)
+  async publishDatabasePost(username, publicKey, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'post'), {
+      username,
+      publicKey,
+      databaseId,
+      peerId: this.peer.id().toB58String()
+    })
   }
 
-  _handleDbPost(msg) {
-    console.log('received notice:db:post')
+  async publishDatabaseDelete(username, databaseId) {
+    await this.publish(topics.topic(topics.prefix.NOTICE, 'db', 'delete'), {
+      username,
+      databaseId
+    })
+  }
 
-    const json = JSON.parse(uint8ArrayToString(msg.data))
-    const message = Message.fromJson(json)
+  async publishProfileRequest() {
+
+  }
+
+  _handleDatabasePost(message) {
+    console.log('received notice:db:post')
 
     // TODO accept IDs that are not the one exactly above
     //     if it is even higher, question about the updated database
@@ -70,21 +79,23 @@ export default class Notices {
     this.peer.authManager.setEntry(username, publicKey, peerId)
   }
 
-  _handleDbDelete(msg) {
+  _handleDatabaseDelete(message) {
     console.log('received notice:db:delete')
-
-    const json = JSON.parse(uint8ArrayToString(msg.data))
-    const message = Message.fromJson(json)
 
     // TODO accept IDs that are not the one exactly above
     //     if it is even higher, question about the updated database
     //     if it is lower, do something as well
 
     const { username, databaseId } = message.data
+
     if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
       return
     }
 
     this.peer.authManager.delete(username)
+  }
+
+  _handleProfileRequest(message) {
+    console.log('received notice:db:profile:request')
   }
 }

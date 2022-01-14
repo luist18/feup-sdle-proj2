@@ -27,7 +27,7 @@ export default class MessageBuilder {
    * @param {string} type the type of the message
    * @returns the message object
    */
-  build(data, type) {
+  build(data, type = 'general-message') {
     return new Message(data, type, this.username, Date.now())
   }
 

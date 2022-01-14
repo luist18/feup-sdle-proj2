@@ -191,11 +191,7 @@ export function cache(req, res) {
 export async function remove(req, res) {
   const peer = req.app.get('peer')
 
-  peer.authManager.delete(peer.username)
-  await peer.notices.publishDbDelete(
-    peer.username,
-    peer.authManager.getDatabaseId()
-  )
+  await peer.delete()
 
   peer.stop(2 * 1000)
 

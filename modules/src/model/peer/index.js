@@ -5,10 +5,10 @@ import kadDHT from 'libp2p-kad-dht'
 import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import PeerId from 'peer-id'
 import { readFileSync, writeFileSync } from 'fs'
 import * as crypto from 'crypto'
+import cron from 'cron'
 
 import TimelineManager from '../timeline/index.js'
 import AuthManager from '../auth/index.js'
@@ -16,14 +16,12 @@ import Notices from './notices.js'
 import Protocols from './protocols.js'
 import peerConfig from '../../config/peer.js'
 
-
 const PEER_STATUS = {
   ONLINE: 'online',
   OFFLINE: 'offline'
 }
 
-const jsonFilePath = "./src/model/peer/id.json";
-
+const jsonPath = './src/model/peer/'
 
 export default class Peer {
   /**
@@ -43,6 +41,7 @@ export default class Peer {
     this.username = username
     this.port = port
     this.followedUsers = []
+    this.addedUser = false
 
     this.libp2p = null
 
@@ -102,12 +101,11 @@ export default class Peer {
     if (this.isOnline()) {
       return false
     }
-    
-    let peerID;
-    try{
-      peerID = await PeerId.createFromJSON(JSON.parse(readFileSync(jsonFilePath)))
-    }catch (err){
-      console.log("Peer ID not found.")
+    let peerID
+    try {
+      peerID = await PeerId.createFromJSON(JSON.parse(readFileSync(`${jsonPath}${this.username}_id.json`)))
+    } catch (err) {
+      console.log('Peer ID not found.')
       console.log(err)
     }
 
@@ -148,6 +146,12 @@ export default class Peer {
 
     this.protocols.subscribeAll()
     this.notices.subscribeAll()
+
+    const job = new cron.CronJob(
+      '*/5 * * * * *',
+      this.storeSubscriptions.bind(this)
+    )
+    job.start()
     return true
   }
 
@@ -162,8 +166,12 @@ export default class Peer {
     }
 
     await this._libp2p().stop()
-    
-    writeFileSync(jsonFilePath, JSON.stringify(this.id()), 'utf8')
+
+    writeFileSync(
+      `${jsonPath}${this.username}_id.json`,
+      JSON.stringify(this.id()),
+      'utf8'
+    )
 
     this.status = Peer.STATUS.OFFLINE
 
@@ -272,22 +280,21 @@ export default class Peer {
 
     // Adds listener
     this._libp2p().pubsub.on(username, (message) => {
-      
-      console.log("Received post: " + message.data)
-      
+      console.log('Received post: ' + message.data)
+
       const post = JSON.parse(message.data)
 
       const publicKey = this.authManager.getKeyByUsermame(username)
 
       // Verifies if peer has user public key
-      if(!publicKey){
-        console.log("Ignoring post received from unknown username.")
+      if (!publicKey) {
+        console.log('Ignoring post received from unknown username.')
         return
       }
 
-      // Verifies the identity of the user who posted 
+      // Verifies the identity of the user who posted
       const verifyAuthenticity = crypto.verify(SIGN_ALGORITHM, Buffer.from(post.message), publicKey, Buffer.from(post.signature, 'base64'))
-      if(!verifyAuthenticity){
+      if (!verifyAuthenticity) {
         console.log("User signature doesn't match. Ignoring post.")
         return
       }
@@ -298,6 +305,7 @@ export default class Peer {
 
     // Adds to followed to users
     this.followedUsers.push(username)
+    this.addedUser = true
 
     this._libp2p().pubsub.subscribe(username)
 
@@ -317,16 +325,25 @@ export default class Peer {
     return true
   }
 
-
   async send(message) {
     const signature = crypto.sign(SIGN_ALGORITHM, Buffer.from(message), this.authManager.privateKey).toString('base64')
-    
-    const data = {message, signature}
+
+    const data = { message, signature }
 
     await this._libp2p().pubsub.publish(this.username, uint8ArrayFromString(JSON.stringify(data)))
 
     this.timeline.addMessage(this.username, message)
 
     console.log(`User ${this.username} published message ${message}`)
+  }
+
+  storeSubscriptions() {
+    console.log('Executing Job')
+    if (this.addedUser) {
+      const subs = JSON.stringify(this.followedUsers)
+      writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
+      this.addedUser = false
+      console.log('Backed up all users')
+    }
   }
 }

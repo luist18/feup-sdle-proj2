@@ -105,7 +105,7 @@ class CacheProtocol extends Protocol {
 
     const { data } = message
 
-    data.forEach((post) => this.peer._storePost)
+    data.forEach(this.peer._storePost)
   }
 }
 

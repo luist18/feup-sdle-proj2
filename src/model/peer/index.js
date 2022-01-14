@@ -463,7 +463,14 @@ export default class Peer {
 
       return this.timeline.get(username)
     } catch (err) {
-      // asks for the data
+      // asks the data
+      await this.notices.publishProfileRequest(username)
+
+      // wait timeout and return the data
+      // wait 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, peerConfig.protocols.cache.PROFILE_REQUEST_TIMEOUT))
+
+      return this.timeline.get(username)
     }
   }
 }

@@ -19,15 +19,15 @@ export default class Notices {
   register() {
     this._subscribe(
       topics.topic(topics.prefix.NOTICE, 'db', 'post'),
-      this._handleDatabasePost
+      this._handleDatabasePost.bind(this)
     )
     this._subscribe(
       topics.topic(topics.prefix.NOTICE, 'db', 'delete'),
-      this._handleDatabaseDelete
+      this._handleDatabaseDelete.bind(this)
     )
     this._subscribe(
       topics.topic(topics.prefix.NOTICE, 'profile', 'request'),
-      this._handleProfileRequest
+      this._handleProfileRequest.bind(this)
     )
   }
 
@@ -35,7 +35,7 @@ export default class Notices {
     this.peer.libp2p.pubsub.on(channel, (message) => {
       const json = JSON.parse(uint8ArrayToString(message.data))
       const parsedMessage = Message.fromJson(json)
-      handler(parsedMessage).bind(this)
+      handler(parsedMessage)()
     })
     this.peer.libp2p.pubsub.subscribe(channel)
   }
@@ -77,7 +77,6 @@ export default class Notices {
 
   _handleDatabasePost(message) {
     console.log('received notice:db:post')
-
     // TODO accept IDs that are not the one exactly above
     //     if it is even higher, question about the updated database
     //     if it is lower, do something as well

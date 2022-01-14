@@ -30,6 +30,10 @@ class Cache {
 
     return cached.filter((message) => message._metadata.ownerTimestamp > since)
   }
+
+  has(owner) {
+    return this.cache.has(owner)
+  }
 }
 
 export default Cache

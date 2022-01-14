@@ -22,7 +22,9 @@ export default class TimelineManager {
     if (
       userPosts.find((post) => post._metadata.id === message._metadata.id) !==
       undefined
-    ) { return false }
+    ) {
+      return false
+    }
 
     userPosts.push(message)
 

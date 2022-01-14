@@ -13,6 +13,10 @@ class CacheProtocol extends Protocol {
       topics.topic(topics.prefix.CACHE, 'get'),
       this._handleGetFromUser.bind(this)
     )
+    super._subscribe(
+      topics.topic(topics.prefix.CACHE, 'send-to'),
+      this._handleSendTo.bind(this)
+    )
   }
 
   add(message) {
@@ -62,6 +66,16 @@ class CacheProtocol extends Protocol {
     return cachedData.values()
   }
 
+  async sendTo(peerId, data) {
+    const messageBuilder = this.peer.messageBuilder
+
+    const cacheMessage = messageBuilder.buildCache(data)
+
+    const { stream } = await this.peer._libp2p().dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
+
+    send(stream, cacheMessage)
+  }
+
   async _handleAdd(stream) {
     const message = await receive(stream)
 
@@ -84,6 +98,14 @@ class CacheProtocol extends Protocol {
     const cacheMessage = this.peer.messageBuilder.buildCache(cached)
 
     send(stream, cacheMessage)
+  }
+
+  async _handleSendTo(stream) {
+    const message = await receive(stream)
+
+    const { data } = message
+
+    data.forEach((post) => this.peer._storePost)
   }
 }
 

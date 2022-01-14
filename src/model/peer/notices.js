@@ -2,9 +2,16 @@ import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import Message from '../message/index.js'
 import topics from '../message/topics.js'
+// eslint-disable-next-line no-unused-vars
+import Peer from './index.js'
 
 // notices are messages that are sent to all the network
 export default class Notices {
+  /**
+   * Creates the notice manager for a peer.
+   *
+   * @param {Peer} peer the peer
+   */
   constructor(peer) {
     this.peer = peer
   }
@@ -59,8 +66,13 @@ export default class Notices {
     })
   }
 
-  async publishProfileRequest() {
-
+  async publishProfileRequest(username) {
+    await this.publish(
+      topics.topic(topics.prefix.NOTICE, 'profile', 'request'),
+      {
+        username
+      }
+    )
   }
 
   _handleDatabasePost(message) {
@@ -95,7 +107,36 @@ export default class Notices {
     this.peer.authManager.delete(username)
   }
 
+  /**
+   * Handles the profile request notice
+   *
+   * @param {Message} message
+   * @returns {void}
+   */
   _handleProfileRequest(message) {
     console.log('received notice:db:profile:request')
+
+    const { username } = message.data
+    const { owner } = message._metadata
+
+    try {
+      const requester = this.peer.authManager.getIdByUsername(owner)
+
+      // verify if i have the information about the peer
+
+      const cache = this.peer.cache
+
+      if (!cache.has(username)) {
+        return
+      }
+
+      // get data and send to requester
+
+      const data = cache.get(username)
+
+      this.peer.cacheProtocol.sendTo(requester, data)
+    } catch (err) {
+      // todo: log the error
+    }
   }
 }

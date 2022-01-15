@@ -114,9 +114,13 @@ class CacheProtocol extends Protocol {
 
     const posts = [...map.values()]
 
-    console.log(posts)
+    console.log('posts', posts)
 
-    posts.forEach((post) => {
+    const flattened = [].concat(...posts)
+
+    console.log('flattened', flattened)
+
+    flattened.forEach((post) => {
       this.peer._storePost(post)
     })
   }

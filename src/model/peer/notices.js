@@ -159,7 +159,12 @@ export default class Notices {
 
       const map = cache.getAll(usernames, since)
 
-      if ([...map.values()].length === 0) {
+      // if the usernames include the current peer, then send own posts
+      if (usernames.includes(this.peer.username)) {
+        map.set(this.peer.username, this.peer.postManager.getAll(since))
+      }
+
+      if ([].concat(...map.values()).length === 0) {
         return
       }
 

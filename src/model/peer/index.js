@@ -482,4 +482,30 @@ export default class Peer {
       return this.timeline.get(username)
     }
   }
+
+  /**
+   * Gets the post of the users that this peer follows, after a given timeline.
+   *
+   * @param {number} timestamp the timestamp after which the posts are retrieved
+   * @returns {Post[]} the posts
+   */
+  async posts(timestamp) {
+    const following = this.subscriptionManager.get()
+
+    following.forEach((username) => {
+      if (!this.subscriptionManager.has(username)) {
+        throw new Error(peerConfig.error.NOT_FOLLOWING_USER)
+      }
+    })
+
+    await this.notices.publishProfileRequest(following, timestamp)
+
+    // wait timeout and return the data
+    // wait 5 seconds
+    await new Promise((resolve) =>
+      setTimeout(resolve, peerConfig.protocols.cache.PROFILE_REQUEST_TIMEOUT)
+    )
+
+    return this.timeline.getAll(timestamp)
+  }
 }

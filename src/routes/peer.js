@@ -12,7 +12,8 @@ import {
   database,
   remove,
   cache,
-  profile
+  profile,
+  timeline
 } from '../controller/peer.controller.js'
 
 const router = express.Router()
@@ -25,6 +26,7 @@ router.get('/cache', validateOnlineStatus, cache)
 router.get('/database', validateOnlineStatus, database)
 router.get('/profile', validateOnlineStatus, profile)
 router.get('/status', status)
+router.get('/timeline', validateOnlineStatus, timeline)
 router.get('/token', validateOnlineStatus, token)
 
 router.post('/post', validateOnlineStatus, post)

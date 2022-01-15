@@ -69,4 +69,16 @@ export default class TimelineManager {
   replace(user, timeline) {
     this.posts.set(user, [...timeline])
   }
+
+  /**
+   * Gets the posts in the timeline after a certain timestamp.
+   *
+   * @param {number} timestamp the maximum not acceptable timestamp of the posts. Default -1
+   * @returns {Post[]} the posts
+   */
+  getAll(timestamp = -1) {
+    return Array.from(this.posts.values())
+      .reduce((acc, userPosts) => acc.concat(userPosts), [])
+      .filter((post) => post._metadata.ownerTimestamp > timestamp)
+  }
 }

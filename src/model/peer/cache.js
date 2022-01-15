@@ -12,7 +12,10 @@ class Cache {
 
     const cached = this.cache.get(owner)
 
-    if (cached.find((curr) => curr._metadata.id === message._metadata.id) !== undefined) {
+    if (
+      cached.find((curr) => curr._metadata.id === message._metadata.id) !==
+      undefined
+    ) {
       return false
     }
 
@@ -43,6 +46,10 @@ class Cache {
     }
 
     return this.cache.delete(owner)
+  }
+
+  has(owner) {
+    return this.cache.has(owner)
   }
 }
 

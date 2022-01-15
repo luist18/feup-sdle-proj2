@@ -11,8 +11,8 @@ class Database {
     return this.entries[username] !== undefined
   }
 
-  set(username, publicKey) {
-    this.entries[username] = publicKey
+  set(username, publicKey, peerId) {
+    this.entries[username] = { publicKey, peerId }
     this.id++
   }
 

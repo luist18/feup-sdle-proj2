@@ -1,30 +1,29 @@
-import * as SignatureUtils from './signatureUtils.js'
+class SubscriptionManager {
+  constructor() {
+    this.following = []
+  }
 
-export default class SubscriptionManager {
-  handlePost(username, message) {
-    console.log('Received post: ' + message.data)
-
-    const post = JSON.parse(message.data)
-
-    const publicKey = this.authManager.getKeyByUsermame(username)
-
-    // Verifies if peer has user public key
-    if (!publicKey) {
-      console.log('Ignoring post received from unknown username.')
-      return
+  add(username) {
+    if (this.following.includes(username)) {
+      return false
     }
 
-    const verifyAuthenticity = SignatureUtils.verify(
-      post.message,
-      post.signature,
-      publicKey
-    )
+    this.following.push(username)
+    return true
+  }
 
-    if (!verifyAuthenticity) {
-      console.log("User signature doesn't match. Ignoring post.")
-      return
+  remove(username) {
+    if (!this.following.includes(username)) {
+      return false
     }
-    // Adds message to the timeline
-    this.timeline.addMessage(username, post.message)
+
+    this.following = this.following.filter(u => u !== username)
+    return true
+  }
+
+  has(username) {
+    return this.following.includes(username)
   }
 }
+
+export default SubscriptionManager

@@ -6,6 +6,10 @@ export default class TimelineManager {
     this.posts = new Map()
   }
 
+  get(user) {
+    return this.posts.get(user)
+  }
+
   add(message) {
     const { user } = message.data
 
@@ -15,6 +19,19 @@ export default class TimelineManager {
 
     const userPosts = this.posts.get(user)
 
+    if (
+      userPosts.find((post) => post._metadata.id === message._metadata.id) !==
+      undefined
+    ) {
+      return false
+    }
+
     userPosts.push(message)
+
+    return true
+  }
+
+  replace(user, timeline) {
+    this.posts.set(user, [...timeline])
   }
 }

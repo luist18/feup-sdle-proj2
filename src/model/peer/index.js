@@ -9,9 +9,10 @@ import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
+import Message from '../message/index.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
-import TimelineManager from '../timeline/index.js'
+import TimelineManager from './timelineManager.js'
 import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
 import AuthProtocol from './protocol/auth.protocol.js'
@@ -19,7 +20,6 @@ import Notices from './notices.js'
 import Cache from './cache.js'
 import PostManager from './postManager.js'
 import SubscriptionManager from './subscriptionManager.js'
-import Message from '../message/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -408,6 +408,8 @@ export default class Peer {
     }
 
     this._libp2p().pubsub.unsubscribe(username)
+
+    this.timeline.deleteAllFrom(username)
 
     console.log(`User ${this.username} unfollowed user ${username}`)
     return true

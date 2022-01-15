@@ -24,9 +24,26 @@ export default class TimelineManager {
 
     const userPosts = this.posts.get(user)
 
+    if (
+      userPosts.find((post) => post._metadata.id === message._metadata.id) !==
+      undefined
+    ) {
+      return false
+    }
+
     userPosts.push(message)
 
     return true
+  }
+
+  /**
+   * The timeline of a user.
+   *
+   * @param {string} user the username
+   * @returns {Message[]} the posts
+   */
+  get(user) {
+    return this.posts.get(user)
   }
 
   /**
@@ -41,5 +58,15 @@ export default class TimelineManager {
     }
 
     return this.posts.delete(username)
+  }
+
+  /**
+   * Replaces the timeline of a user.
+   *
+   * @param {string} user the username
+   * @param {Message[]} timeline the timeline
+   */
+  replace(user, timeline) {
+    this.posts.set(user, [...timeline])
   }
 }

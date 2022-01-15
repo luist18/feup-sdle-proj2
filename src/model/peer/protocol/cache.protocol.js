@@ -1,29 +1,22 @@
 import topics from '../../message/topics.js'
 
+import Protocol from './protocol.js'
 import { send, receive, trade } from '../communication/streaming.js'
 
-class CacheProtocol {
-  constructor(peer) {
-    this.peer = peer
-  }
-
+class CacheProtocol extends Protocol {
   register() {
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'add'),
       this._handleAdd.bind(this)
     )
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'get'),
       this._handleGetFromUser.bind(this)
     )
-  }
-
-  _subscribe(protocol, handler) {
-    this.peer._libp2p().handle(protocol, ({ stream }) => {
-      // TODO: replace with debug
-      console.log(`Received protocol ${protocol}`)
-      handler(stream).bind(this)
-    })
+    super._subscribe(
+      topics.topic(topics.prefix.CACHE, 'send-to'),
+      this._handleSendTo.bind(this)
+    )
   }
 
   add(message) {
@@ -73,6 +66,21 @@ class CacheProtocol {
     return cachedData.values()
   }
 
+  async sendTo(peerId, data) {
+    console.log(peerId)
+    const messageBuilder = this.peer.messageBuilder
+
+    const cacheMessage = messageBuilder.buildCached(data)
+
+    try {
+      const { stream } = await this.peer._libp2p().dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
+      console.log('debug')
+      send(stream, cacheMessage)
+    } catch (err) {
+      console.log('fds', err)
+    }
+  }
+
   async _handleAdd(stream) {
     const message = await receive(stream)
 
@@ -95,6 +103,14 @@ class CacheProtocol {
     const cacheMessage = this.peer.messageBuilder.buildCache(cached)
 
     send(stream, cacheMessage)
+  }
+
+  async _handleSendTo(stream) {
+    const message = await receive(stream)
+
+    const { data } = message
+
+    data.forEach((post) => { this.peer._storePost(post) })
   }
 }
 

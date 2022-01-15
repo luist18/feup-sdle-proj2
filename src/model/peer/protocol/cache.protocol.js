@@ -67,13 +67,19 @@ class CacheProtocol extends Protocol {
   }
 
   async sendTo(peerId, data) {
+    console.log(peerId)
     const messageBuilder = this.peer.messageBuilder
 
-    const cacheMessage = messageBuilder.buildCache(data)
+    const cacheMessage = messageBuilder.buildCached(data)
 
-    const { stream } = await this.peer._libp2p().dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
+    try {
+      const { stream } = await this.peer._libp2p().dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
+      console.log('debug')
+      send(stream, cacheMessage)
+    } catch (err) {
+      console.log('fds', err)
+    }
 
-    send(stream, cacheMessage)
   }
 
   async _handleAdd(stream) {
@@ -105,7 +111,7 @@ class CacheProtocol extends Protocol {
 
     const { data } = message
 
-    data.forEach(this.peer._storePost)
+    data.forEach((post) => { this.peer._storePost(post) })
   }
 }
 

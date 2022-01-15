@@ -112,7 +112,7 @@ export default class Notices {
    * @param {Message} message
    * @returns {void}
    */
-  _handleProfileRequest(message) {
+  async _handleProfileRequest(message) {
     console.log('received notice:db:profile:request')
 
     const { username } = message.data
@@ -133,9 +133,10 @@ export default class Notices {
 
       const data = cache.get(username)
 
-      this.peer.cacheProtocol.sendTo(requester, data)
+      await this.peer.cacheProtocol.sendTo(requester, data)
     } catch (err) {
       // todo: log the error
+      console.log(err)
     }
   }
 }

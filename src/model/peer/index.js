@@ -452,7 +452,7 @@ export default class Peer {
     const destinationId = this.authManager.getIdByUsername(username)
 
     try {
-      this.connect(destinationId)
+      await this.connect(destinationId)
 
       const message = await this.profileProtocol.request(username, destinationId)
       const posts = message.data

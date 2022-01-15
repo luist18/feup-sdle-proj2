@@ -461,6 +461,7 @@ export default class Peer {
         username,
         destinationId
       )
+
       const posts = message.data
 
       this.timeline.replace(username, posts)
@@ -470,7 +471,7 @@ export default class Peer {
       return this.timeline.get(username)
     } catch (err) {
       // asks the data
-      await this.notices.publishProfileRequest(username)
+      await this.notices.publishProfileRequest([username])
 
       // wait timeout and return the data
       // wait 5 seconds

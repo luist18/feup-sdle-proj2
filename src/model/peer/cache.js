@@ -35,6 +35,28 @@ class Cache {
   }
 
   /**
+   * Gets the cached posts of a list of owners.
+   *
+   * @param {string[]} owners the owners to check
+   * @param {number} since the timestamp to filter the posts
+   *
+   * @returns {Map<string, Message[]>} the cached posts of the owners
+   */
+  getAll(owners, since = -1) {
+    const cached = new Map()
+
+    owners.forEach((owner) => {
+      if (this.cache.has(owner)) {
+        const cachedPosts = this.cache.get(owner).filter((message) => message._metadata.ownerTimestamp > since)
+
+        cached.set(owner, cachedPosts)
+      }
+    })
+
+    return cached
+  }
+
+  /**
    * Deletes the cache entries of a user.
    *
    * @param {string} owner the owner identifier

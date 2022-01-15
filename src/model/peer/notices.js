@@ -70,11 +70,24 @@ export default class Notices {
     )
   }
 
-  async publishProfileRequest(username) {
+  /**
+   * Publishes a profile request.
+   *
+   * @param {string[]} usernames the usernames
+   * @param {number} timestamp the timestamp
+   */
+  async publishProfileRequest(usernames, timestamp = -1) {
+    const filteredUsernames = usernames.filter((current) => current !== this.peer.username)
+
+    if (filteredUsernames.length === 0) {
+      return
+    }
+
     await this.publish(
       topics.topic(topics.prefix.NOTICE, 'profile', 'request'),
       {
-        username
+        usernames: filteredUsernames,
+        since: timestamp
       }
     )
   }
@@ -128,8 +141,14 @@ export default class Notices {
   async _handleProfileRequest(message) {
     console.log('received notice:db:profile:request')
 
-    const { username } = message.data
+    const { usernames, since } = message.data
     const { owner } = message._metadata
+
+    if (
+      usernames?.length === 0
+    ) {
+      return
+    }
 
     try {
       const requester = this.peer.authManager.getIdByUsername(owner)
@@ -138,13 +157,13 @@ export default class Notices {
 
       const cache = this.peer.cache
 
-      if (!cache.has(username)) {
+      const map = cache.getAll(usernames, since)
+
+      if ([...map.values()].length === 0) {
         return
       }
 
-      // get data and send to requester
-
-      const data = cache.get(username)
+      const data = Object.fromEntries(map)
 
       await this.peer.cacheProtocol.sendTo(requester, data)
     } catch (err) {

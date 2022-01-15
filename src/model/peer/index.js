@@ -19,6 +19,7 @@ import Notices from './notices.js'
 import Cache from './cache.js'
 import PostManager from './postManager.js'
 import SubscriptionManager from './subscriptionManager.js'
+import Message from '../message/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -48,7 +49,7 @@ export default class Peer {
     this.status = Peer.STATUS.OFFLINE
 
     // message builder
-    this.messageBuilder = new MessageBuilder(this.username)
+    this.messageBuilder = new MessageBuilder(this)
 
     // managers and cache
     this.authManager = new AuthManager()
@@ -90,11 +91,11 @@ export default class Peer {
   }
 
   /**
-     * Performs a timed stop.
-     *
-     * @param {number} timeout the timeout in milliseconds
-     * @returns a promise that resolves when the peer is offline
-     */
+   * Performs a timed stop.
+   *
+   * @param {number} timeout the timeout in milliseconds
+   * @returns a promise that resolves when the peer is offline
+   */
   async _timedStop(timeout) {
     this.status = Peer.STATUS.OFFLINE
 
@@ -120,16 +121,19 @@ export default class Peer {
   }
 
   /**
-     * Handles a received post message.
-     *
-     * @param {Object} data the data
-     */
+   * Handles a received post message.
+   *
+   * @param {Object} data the data
+   */
   async _handlePost(data) {
     const raw = uint8ArrayToString(data)
 
-    const message = JSON.parse(raw)
+    const message = Message.fromJson(JSON.parse(raw))
 
-    // TODO: verify authenticity
+    if (!this.messageBuilder.isSigned(message)) {
+      console.log(`Message by ${message._metadata.owner} is not signed`)
+      return
+    }
 
     this._storePost(message)
 
@@ -307,7 +311,11 @@ export default class Peer {
     // TODO persistence
 
     // adds the user to the database
-    database.set(this.username, this.authManager.publicKey, this.id().toB58String())
+    database.set(
+      this.username,
+      this.authManager.publicKey,
+      this.id().toB58String()
+    )
 
     // sets it as the current database
     this.authManager.setDatabase(database)
@@ -405,15 +413,8 @@ export default class Peer {
     return true
   }
 
-  /**
-   * Posts a post to the network.
-   *
-   * @param {string} content the content of a post
-   */
   async post(content) {
     const post = this.messageBuilder.buildPost(content)
-
-    // TODO: sign data
 
     await this._libp2p().pubsub.publish(
       topics.topic(topics.prefix.POST, this.username),
@@ -454,7 +455,10 @@ export default class Peer {
     try {
       await this.connect(destinationId)
 
-      const message = await this.profileProtocol.request(username, destinationId)
+      const message = await this.profileProtocol.request(
+        username,
+        destinationId
+      )
       const posts = message.data
 
       this.timeline.replace(username, posts)
@@ -468,7 +472,9 @@ export default class Peer {
 
       // wait timeout and return the data
       // wait 5 seconds
-      await new Promise((resolve) => setTimeout(resolve, peerConfig.protocols.cache.PROFILE_REQUEST_TIMEOUT))
+      await new Promise((resolve) =>
+        setTimeout(resolve, peerConfig.protocols.cache.PROFILE_REQUEST_TIMEOUT)
+      )
 
       return this.timeline.get(username)
     }

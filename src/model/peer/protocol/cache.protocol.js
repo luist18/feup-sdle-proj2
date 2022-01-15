@@ -24,7 +24,7 @@ class CacheProtocol extends Protocol {
 
     const cachedMessage = messageBuilder.fromMessage(message)
 
-    console.log(JSON.stringify(cachedMessage))
+    console.log(cachedMessage)
 
     this.peer.neighbors().forEach((neighbor) => {
       console.log(`sending cache to ${neighbor}`)
@@ -79,7 +79,6 @@ class CacheProtocol extends Protocol {
     } catch (err) {
       console.log('fds', err)
     }
-
   }
 
   async _handleAdd(stream) {

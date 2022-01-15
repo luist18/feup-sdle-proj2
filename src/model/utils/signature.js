@@ -2,10 +2,18 @@ import * as crypto from 'crypto'
 
 const SIGN_ALGORITHM = 'SHA256'
 
+export function signObject(object, privateKey) {
+  return sign(JSON.stringify(object), privateKey)
+}
+
 export function sign(message, privateKey) {
   return crypto
     .sign(SIGN_ALGORITHM, Buffer.from(message), privateKey)
     .toString('base64')
+}
+
+export function verifyObject(object, signature, publicKey) {
+  return verify(JSON.stringify(object), signature, publicKey)
 }
 
 export function verify(message, signature, publicKey) {

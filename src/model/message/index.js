@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import * as signature from '../peer/signatureUtils.js'
+import * as signature from '../utils/signature.js'
 
 // wrapper for exchanged messages between peers
 // in the future can hold things like IDs or timestamps

@@ -2,7 +2,9 @@ import Message from './index.js'
 import Post from './post.js'
 import Cached from './cached.js'
 import CacheRequest from './cacheRequest.js'
-import * as signature from '../peer/signatureUtils.js'
+import Profile from './profile.js'
+import ProfileRequest from './profileRequest.js'
+import * as signature from '../utils/signature.js'
 
 /**
  * Builds messages to send.
@@ -28,7 +30,7 @@ export default class MessageBuilder {
    * @param {boolean} sign whether to sign the message
    * @returns the message object
    */
-  build(data, type, sign) {
+  build(data, type = 'general-message', sign = false) {
     const message = new Message(data, type, this.peer.username, Date.now())
     if (sign) {
       message.sign(this.peer.privateKey)
@@ -64,11 +66,31 @@ export default class MessageBuilder {
    * Messages that will ask peers for cached data.
    *
    * @param {string} user the owner of the cached data
-   * @param {Data} since the timestamp of the cached data
+   * @param {Date} since the timestamp of the cached data
    * @returns the CacheRequest message
    */
   buildCacheRequest(user, since) {
     return new CacheRequest(user, since, this.peer.username, Date.now())
+  }
+
+  /**
+   * Messages that will send a profile to a peer.
+   *
+   * @param {Array} content the content of the profile
+   * @returns the Profile message
+   */
+  buildProfile(content) {
+    return new Profile(content, this.username, Date.now())
+  }
+
+  /**
+   * Messages that will ask peers for cached data.
+   *
+   * @param {string} user the owner of the cached data
+   * @returns the ProfileRequest message
+   */
+  buildProfileRequest(user) {
+    return new ProfileRequest(user, this.username, Date.now())
   }
 
   /**

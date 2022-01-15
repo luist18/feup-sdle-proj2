@@ -1,6 +1,7 @@
 class Cache {
   constructor() {
     this.cache = new Map()
+    this.changed = false
   }
 
   add(message) {
@@ -17,7 +18,7 @@ class Cache {
     }
 
     cached.push(message)
-
+    this.changed = true
     return true
   }
 
@@ -29,6 +30,18 @@ class Cache {
     }
 
     return cached.filter((message) => message._metadata.ownerTimestamp > since)
+  }
+
+  toJSON() {
+    return JSON.stringify(Object.fromEntries(this.cache))
+  }
+
+  fromJSON(json) {
+    this.cache = new Map(Object.entries(JSON.parse(json)))
+  }
+
+  isChanged() {
+    return this.changed
   }
 }
 

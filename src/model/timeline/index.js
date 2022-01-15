@@ -4,6 +4,7 @@
 export default class TimelineManager {
   constructor() {
     this.posts = new Map()
+    this.changed = false
   }
 
   add(post) {
@@ -16,6 +17,8 @@ export default class TimelineManager {
     const userPosts = this.posts.get(user)
 
     userPosts.push(post)
+
+    this.changed = true
   }
 
   toJSON() {
@@ -24,5 +27,9 @@ export default class TimelineManager {
 
   fromJSON(json) {
     this.posts = new Map(Object.entries(JSON.parse(json)))
+  }
+
+  isChanged() {
+    return this.changed
   }
 }

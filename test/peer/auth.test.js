@@ -61,7 +61,7 @@ describe('auth test', () => {
 
   test(
     'check if indirectly connected apps have information about each other',
-    async () => {
+    async() => {
       await new Promise((resolve) => {
         setTimeout(() => {
           expect(

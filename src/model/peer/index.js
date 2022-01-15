@@ -164,10 +164,10 @@ export default class Peer {
     // Stores subs in 5 second interval, if changes occurred
     const job = new cron.CronJob(
       '*/5 * * * * *',
-      this.storeSubscriptions.bind(this)
+      this.storeData.bind(this)
     )
     job.start()
-    
+
     // Imports timeline of followed users and itself, if exists
     try {
       this.timeline.fromJSON(
@@ -175,6 +175,15 @@ export default class Peer {
       )
     } catch (err) {
       console.log('Timeline file not found.')
+    }
+
+    // Imports cache of followed users and itself, if exists
+    try {
+      this.cache.fromJSON(
+        readFileSync(`${jsonPath}${this.username}_cache.json`)
+      )
+    } catch (err) {
+      console.log('Cache file not found.')
     }
 
     return true
@@ -200,12 +209,6 @@ export default class Peer {
     writeFileSync(
       `${jsonPath}${this.username}_id.json`,
       JSON.stringify(this.id()),
-      'utf8'
-    )
-
-    writeFileSync(
-      `${jsonPath}${this.username}_timeline.json`,
-      this.timeline.toJSON(),
       'utf8'
     )
 
@@ -398,12 +401,30 @@ export default class Peer {
    * Stores the current peer subscriptions in a metadata file.
    *
    */
-  storeSubscriptions() {
+  storeData() {
     if (this.addedUser) {
       const subs = JSON.stringify(this.followedUsers)
       writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
       this.addedUser = false
       console.log('Backed up all users')
+    }
+
+    if (this.timeline.isChanged()) {
+      writeFileSync(
+        `${jsonPath}${this.username}_timeline.json`,
+        this.timeline.toJSON(),
+        'utf8'
+      )
+      this.timeline.changed = false
+    }
+
+    if (this.cache.isChanged()) {
+      writeFileSync(
+        `${jsonPath}${this.username}_cache.json`,
+        this.cache.toJSON(),
+        'utf8'
+      )
+      this.cache.changed = false
     }
   }
 

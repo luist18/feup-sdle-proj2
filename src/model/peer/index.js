@@ -17,6 +17,7 @@ import MessageBuilder from '../message/builder.js'
 import PostManager from '../timeline/postManager.js'
 import TimelineManager from '../timeline/index.js'
 import SubscriptionManager from './subscriptionManager.js'
+import Message from '../message/index.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -50,7 +51,7 @@ export default class Peer {
     this.postManager = new PostManager()
 
     this.subManager = new SubscriptionManager(this)
-    this.messageBuilder = new MessageBuilder(this.username)
+    this.messageBuilder = new MessageBuilder(this)
 
     this.cache = new Cache()
 
@@ -325,9 +326,13 @@ export default class Peer {
   async _handlePost(data) {
     const raw = uint8ArrayToString(data)
 
-    const message = JSON.parse(raw)
+    let message = JSON.parse(raw)
+    message = Message.fromJson(message)
 
-    // TODO: verify authenticity
+    if (!this.messageBuilder.isSigned(message)) {
+      console.log(`Message by ${message._metadata.owner} is not signed`)
+      return
+    }
 
     this._storePost(message)
 
@@ -337,8 +342,6 @@ export default class Peer {
 
   async post(content) {
     const post = this.messageBuilder.buildPost(content)
-
-    // TODO: sign data
 
     await this._libp2p().pubsub.publish(
       topics.topic(topics.prefix.POST, this.username),

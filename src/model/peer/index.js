@@ -14,8 +14,8 @@ import Protocols from './protocols.js'
 import Cache from './cache.js'
 import topics from '../message/topics.js'
 import MessageBuilder from '../message/builder.js'
-import PostManager from '../timeline/postManager.js'
-import TimelineManager from '../timeline/index.js'
+import PostManager from './postManager.js'
+import TimelineManager from './timelineManager'
 import SubscriptionManager from './subscriptionManager.js'
 import Message from '../message/index.js'
 
@@ -308,6 +308,8 @@ export default class Peer {
     }
 
     this._libp2p().pubsub.unsubscribe(username)
+
+    this.timeline.deleteAllFrom(username)
 
     console.log(`User ${this.username} unfollowed user ${username}`)
     return true

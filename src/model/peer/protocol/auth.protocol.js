@@ -77,7 +77,12 @@ class AuthProtocol extends Protocol {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = sign(username, privateKey)
+    let signature
+    try {
+      signature = sign(username, privateKey)
+    } catch (error) {
+      return { bestNeighbor, bestReply }
+    }
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {

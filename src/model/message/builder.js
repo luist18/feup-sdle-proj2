@@ -33,7 +33,7 @@ export default class MessageBuilder {
   build(data, type = 'general-message', sign = false) {
     const message = new Message(data, type, this.peer.username, Date.now())
     if (sign) {
-      message.sign(this.peer.privateKey)
+      message.sign(this.peer.authManager.privateKey)
     }
     return message
   }

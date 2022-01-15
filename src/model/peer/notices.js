@@ -94,7 +94,7 @@ export default class Notices {
     this.peer.authManager.setEntry(username, publicKey, peerId)
   }
 
-  _handleDatabaseDelete(message) {
+  async _handleDatabaseDelete(message) {
     console.log('received notice:db:delete')
 
     // TODO accept IDs that are not the one exactly above
@@ -112,7 +112,11 @@ export default class Notices {
       return
     }
 
+    // removes data from database
     this.peer.authManager.delete(username)
+    // remove data from cache and unsubscribes the user
+    await this.peer.unsubscribe(username)
+    this.peer.cache.deleteEntry(username)
   }
 
   /**

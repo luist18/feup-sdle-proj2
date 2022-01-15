@@ -12,7 +12,10 @@ class Cache {
 
     const cached = this.cache.get(owner)
 
-    if (cached.find((curr) => curr._metadata.id === message._metadata.id) !== undefined) {
+    if (
+      cached.find((curr) => curr._metadata.id === message._metadata.id) !==
+      undefined
+    ) {
       return false
     }
 
@@ -29,6 +32,20 @@ class Cache {
     }
 
     return cached.filter((message) => message._metadata.ownerTimestamp > since)
+  }
+
+  /**
+   * Deletes the cache entries of a user.
+   *
+   * @param {string} owner the owner identifier
+   * @returns {boolean} true if the user was deleted, false otherwise
+   */
+  deleteEntry(owner) {
+    if (!this.cache.has(owner)) {
+      return false
+    }
+
+    return this.cache.delete(owner)
   }
 
   has(owner) {

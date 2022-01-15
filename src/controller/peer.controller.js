@@ -36,16 +36,11 @@ export async function start(req, res) {
 
     await peer.start()
   } else {
-    let started = false
     try {
       // tries to join the network with the token
-      started = await peer.start(token)
+      await peer.start(token)
     } catch (err) {
       // peer.start raises exception if the token is invalid
-      started = false
-    }
-
-    if (!started) {
       return res
         .status(rest.status.BAD_REQUEST)
         .json({ message: rest.message.token.INVALID })
@@ -68,6 +63,8 @@ export async function start(req, res) {
       }
     }
   }
+
+  peer.recoverSubscriptions()
 
   return res.status(rest.status.CREATED).json({
     message: rest.message.peer.STARTED,

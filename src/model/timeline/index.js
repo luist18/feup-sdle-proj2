@@ -6,8 +6,8 @@ export default class TimelineManager {
     this.posts = new Map()
   }
 
-  add(message) {
-    const { user } = message.data
+  add(post) {
+    const { user } = post.data
 
     if (!this.posts.has(user)) {
       this.posts.set(user, [])
@@ -15,6 +15,14 @@ export default class TimelineManager {
 
     const userPosts = this.posts.get(user)
 
-    userPosts.push(message)
+    userPosts.push(post)
+  }
+
+  toJSON() {
+    return JSON.stringify(Object.fromEntries(this.posts))
+  }
+
+  fromJSON(json) {
+    this.posts = new Map(Object.entries(JSON.parse(json)))
   }
 }

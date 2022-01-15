@@ -105,3 +105,6 @@ dist
 
 # vscode
 .vscode
+
+# persistent data
+src/model/peer/metadata/

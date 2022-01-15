@@ -122,14 +122,6 @@ export default class Peer {
       console.log('Peer ID file not found.')
     }
 
-    try {
-      this.followedUsers = JSON.parse(
-        readFileSync(`${jsonPath}${this.username}_sub.json`)
-      )
-    } catch (err) {
-      console.log('Subscriptions file not found.')
-    }
-
     this.libp2p = await libp2p.create({
       addresses: {
         listen: ['/ip4/0.0.0.0/tcp/0']
@@ -175,6 +167,15 @@ export default class Peer {
       this.storeSubscriptions.bind(this)
     )
     job.start()
+    
+    // Imports timeline of followed users and itself, if exists
+    try {
+      this.timeline.fromJSON(
+        readFileSync(`${jsonPath}${this.username}_timeline.json`)
+      )
+    } catch (err) {
+      console.log('Timeline file not found.')
+    }
 
     return true
   }
@@ -199,6 +200,12 @@ export default class Peer {
     writeFileSync(
       `${jsonPath}${this.username}_id.json`,
       JSON.stringify(this.id()),
+      'utf8'
+    )
+
+    writeFileSync(
+      `${jsonPath}${this.username}_timeline.json`,
+      this.timeline.toJSON(),
       'utf8'
     )
 
@@ -387,12 +394,33 @@ export default class Peer {
     console.log(`User ${this.username} published message ${content}`)
   }
 
+  /**
+   * Stores the current peer subscriptions in a metadata file.
+   *
+   */
   storeSubscriptions() {
     if (this.addedUser) {
       const subs = JSON.stringify(this.followedUsers)
       writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
       this.addedUser = false
       console.log('Backed up all users')
+    }
+  }
+
+  /**
+   * Recovers the current peer subscriptions from metadata file.
+   *
+   */
+  recoverSubscriptions() {
+    try {
+      const followed = JSON.parse(
+        readFileSync(`${jsonPath}${this.username}_sub.json`)
+      )
+      followed.forEach(user => {
+        this.subscribe(user)
+      })
+    } catch (err) {
+      console.log('Subscriptions file not found.')
     }
   }
 }

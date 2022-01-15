@@ -2,9 +2,16 @@ import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import Message from '../message/index.js'
 import topics from '../message/topics.js'
+// eslint-disable-next-line no-unused-vars
+import Peer from './index.js'
 
 // notices are messages that are sent to all the network
 export default class Notices {
+  /**
+   * Creates the notices class.
+   *
+   * @param {Peer} peer the peer
+   */
   constructor(peer) {
     this.peer = peer
   }
@@ -68,7 +75,7 @@ export default class Notices {
     this.peer.authManager.setEntry(username, publicKey)
   }
 
-  _handleDbDelete(msg) {
+  async _handleDbDelete(msg) {
     console.log('received notice:db:delete')
 
     const json = JSON.parse(uint8ArrayToString(msg.data))
@@ -84,6 +91,10 @@ export default class Notices {
       return
     }
 
+    // removes data from database
     this.peer.authManager.delete(username)
+    // remove data from cache and unsubscribes the user
+    await this.peer.unsubscribe(username)
+    this.peer.cache.deleteEntry(username)
   }
 }

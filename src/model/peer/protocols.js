@@ -138,7 +138,13 @@ export default class Protocols {
     let bestReply = false
     let bestNeighbor = null
 
-    const signature = SignatureUtils.sign(username, privateKey)
+    let signature
+    try {
+      signature = SignatureUtils.sign(username, privateKey)
+    } catch (err) {
+      // if it can't create the signature, it means that the private key is wrong
+      return { bestNeighbor, bestReply }
+    }
 
     // sends the username to the neighbors
     for await (const neighbor of neighbors) {

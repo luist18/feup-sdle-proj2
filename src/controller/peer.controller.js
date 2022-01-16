@@ -4,7 +4,6 @@ export async function status(req, res) {
   const peer = req.app.get('peer')
 
   const status = peer.status
-  console.log(peer.followedUsers)
 
   return res.status(rest.status.OK).json({ message: status })
 }
@@ -64,7 +63,8 @@ export async function start(req, res) {
     }
   }
 
-  peer.recoverSubscriptions()
+  await peer.recoverSubscriptions()
+  peer.createTimeline()
 
   return res.status(rest.status.CREATED).json({
     message: rest.message.peer.STARTED,
@@ -182,7 +182,7 @@ export function cache(req, res) {
   const peer = req.app.get('peer')
 
   return res.status(rest.status.OK).json({
-    cache: Object.fromEntries(peer.cache.cache)
+    cache: Object.fromEntries(peer.cache.posts)
   })
 }
 

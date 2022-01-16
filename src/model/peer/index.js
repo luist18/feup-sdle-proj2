@@ -65,6 +65,12 @@ export default class Peer {
     this.notices = new Notices(this)
 
     this.timeline = new TimelineManager()
+
+    // Stores subs in 5 second interval, if changes occurred
+    this.job = new cron.CronJob(
+      '*/5 * * * * *',
+      this.storeData.bind(this)
+    )
   }
 
   /**
@@ -161,27 +167,12 @@ export default class Peer {
     this.notices.subscribeAll()
     this.cacheProtocol.register()
 
-    // Stores subs in 5 second interval, if changes occurred
-    const job = new cron.CronJob(
-      '*/5 * * * * *',
-      this.storeData.bind(this)
-    )
-    job.start()
-
-    // Imports timeline of followed users and itself, if exists
-    try {
-      this.timeline.fromJSON(
-        readFileSync(`${jsonPath}${this.username}_timeline.json`)
-      )
-    } catch (err) {
-      console.log('Timeline file not found.')
-    }
+    this.job.start()
 
     // Imports cache of followed users and itself, if exists
     try {
-      this.cache.fromJSON(
-        readFileSync(`${jsonPath}${this.username}_cache.json`)
-      )
+      const jsonData = readFileSync(`${jsonPath}${this.username}_cache.json`)
+      this.cache.fromJSON(jsonData)
     } catch (err) {
       console.log('Cache file not found.')
     }
@@ -211,6 +202,10 @@ export default class Peer {
       JSON.stringify(this.id()),
       'utf8'
     )
+
+    this.job.stop()
+
+    this.followedUsers = []
 
     this.status = Peer.STATUS.OFFLINE
 
@@ -373,6 +368,7 @@ export default class Peer {
     const raw = uint8ArrayToString(data)
 
     const message = JSON.parse(raw)
+    console.log('Received message: ' + data)
 
     // TODO: verify authenticity
 
@@ -402,20 +398,12 @@ export default class Peer {
    *
    */
   storeData() {
+    console.log('Cron job in progress')
     if (this.addedUser) {
       const subs = JSON.stringify(this.followedUsers)
       writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
       this.addedUser = false
       console.log('Backed up all users')
-    }
-
-    if (this.timeline.isChanged()) {
-      writeFileSync(
-        `${jsonPath}${this.username}_timeline.json`,
-        this.timeline.toJSON(),
-        'utf8'
-      )
-      this.timeline.changed = false
     }
 
     if (this.cache.isChanged()) {
@@ -424,6 +412,7 @@ export default class Peer {
         this.cache.toJSON(),
         'utf8'
       )
+      console.log('Backed up cache')
       this.cache.changed = false
     }
   }
@@ -432,16 +421,30 @@ export default class Peer {
    * Recovers the current peer subscriptions from metadata file.
    *
    */
-  recoverSubscriptions() {
+  async recoverSubscriptions() {
     try {
       const followed = JSON.parse(
         readFileSync(`${jsonPath}${this.username}_sub.json`)
       )
-      followed.forEach(user => {
-        this.subscribe(user)
-      })
+      followed.forEach(this.arg.bind(this))
     } catch (err) {
       console.log('Subscriptions file not found.')
     }
+  }
+
+  async arg(user) {
+    await this.subscribe(user)
+  }
+
+  /**
+   * Creates timeline from cache
+   *
+   */
+  createTimeline() {
+    this.cache.posts.forEach((posts, user) => {
+      if (this.followedUsers.includes(user)) {
+        this.timeline.posts.set(user, posts)
+      }
+    })
   }
 }

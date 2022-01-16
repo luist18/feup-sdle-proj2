@@ -14,11 +14,11 @@ class Cache {
     const cached = this.posts.get(owner)
 
     if (cached.find((curr) => curr._metadata.id === message._metadata.id) !== undefined) {
+      console.log('Received duplicate message')
       return false
     }
 
     cached.push(message)
-    console.log('Changed cache')
     this.changed = true
     return true
   }

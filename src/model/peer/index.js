@@ -398,7 +398,6 @@ export default class Peer {
    *
    */
   storeData() {
-    console.log('Cron job in progress')
     if (this.addedUser) {
       const subs = JSON.stringify(this.followedUsers)
       writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
@@ -414,6 +413,13 @@ export default class Peer {
       )
       console.log('Backed up cache')
       this.cache.changed = false
+    }
+
+    if (this.postManager.isChanged()) {
+      const posts = JSON.stringify(this.postManager.getPosts())
+      writeFileSync(`${jsonPath}${this.username}_posts.json`, posts)
+      console.log('Backed up post managers')
+      this.postManager.backedUp()
     }
   }
 
@@ -432,6 +438,21 @@ export default class Peer {
     }
   }
 
+  /**
+   * Recovers the previous posts sent by the peer.
+   *
+   */
+  recoverOwnPosts() {
+    try {
+      const ownPosts = JSON.parse(
+        readFileSync(`${jsonPath}${this.username}_posts.json`)
+      )
+      ownPosts.forEach((post) => this.postManager.push(post))
+    } catch (err) {
+      console.log('Post file not found.')
+    }
+  }
+
   async arg(user) {
     await this.subscribe(user)
   }
@@ -443,7 +464,7 @@ export default class Peer {
   createTimeline() {
     this.cache.posts.forEach((posts, user) => {
       if (this.followedUsers.includes(user)) {
-        this.timeline.posts.set(user, posts)
+        this.timeline.posts.set(user, posts.slice())
       }
     })
   }

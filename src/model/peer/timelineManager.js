@@ -47,6 +47,24 @@ export default class TimelineManager {
   }
 
   /**
+   * Gets a post given its id.
+   *
+   * @param {string} id the post id
+   * @returns {Post} the post correspondent to the ID, or undefined if it does not exist
+   */
+  getPost(id) {
+    for (const [, posts] of this.posts) {
+      const post = posts.find((post) => post._metadata.id === id)
+
+      if (post !== undefined) {
+        return post
+      }
+    }
+
+    return undefined
+  }
+
+  /**
    * Deletes all posts from a user.
    *
    * @param {string} username the username

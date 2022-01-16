@@ -38,7 +38,7 @@ class Cache {
    * Gets the cached posts of a list of owners.
    *
    * @param {string[]} owners the owners to check
-   * @param {number} since the timestamp to filter the posts
+   * @param {number} since the minimum timestamp of the posts
    *
    * @returns {Map<string, Message[]>} the cached posts of the owners
    */

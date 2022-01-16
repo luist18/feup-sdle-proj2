@@ -489,7 +489,7 @@ export default class Peer {
    * @param {number} timestamp the timestamp after which the posts are retrieved
    * @returns {Post[]} the posts
    */
-  async posts(timestamp) {
+  async followingPosts(timestamp) {
     const following = this.subscriptionManager.get()
 
     await this.notices.publishProfileRequest(following, timestamp)

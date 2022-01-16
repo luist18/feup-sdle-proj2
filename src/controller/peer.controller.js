@@ -212,7 +212,7 @@ export async function profile(req, res) {
   }
 }
 
-export async function posts(req, res) {
+export async function followingPosts(req, res) {
   const peer = req.app.get('peer')
 
   let { timestamp } = req.body
@@ -220,6 +220,6 @@ export async function posts(req, res) {
     timestamp = -1
   }
 
-  const data = await peer.posts(timestamp)
+  const data = await peer.followingPosts(timestamp)
   return res.status(rest.status.OK).json({ data })
 }

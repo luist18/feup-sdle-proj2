@@ -83,29 +83,6 @@ describe('auth test', () => {
     5 * 15000
   )
 
-  // test(
-  //   'Peer 1 and 2 subscribe to peer 0',
-  //   async() => {
-  //     Promise.all([
-  //       request(apps[1])
-  //         .put('/peer/subscribe')
-  //         .send({ username: 'peer0' })
-  //         .then((res) => {
-  //           expect(res.status).toBe(201)
-  //           expect(apps[1].get('peer').followedUsers).toContain('peer0')
-  //         }),
-  //       request(apps[2])
-  //         .put('/peer/subscribe')
-  //         .send({ username: 'peer0' })
-  //         .then((res) => {
-  //           expect(res.status).toBe(201)
-  //           expect(apps[2].get('peer').followedUsers).toContain('peer0')
-  //         })
-  //     ]).then(() => {})
-  //   },
-  //   5 * 1000
-  // )
-
   test(
     'turn off apps 🛑',
     (done) => {

@@ -21,4 +21,8 @@ export default class PostManager {
   get(id) {
     return this.posts.find((post) => post._metadata.id === id)
   }
+
+  getAll(timestamp = -1) {
+    return this.posts.filter(post => post.data.timestamp > timestamp)
+  }
 }

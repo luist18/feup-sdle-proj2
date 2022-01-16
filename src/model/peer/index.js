@@ -461,6 +461,7 @@ export default class Peer {
         username,
         destinationId
       )
+
       const posts = message.data
 
       this.timeline.replace(username, posts)
@@ -470,7 +471,7 @@ export default class Peer {
       return this.timeline.get(username)
     } catch (err) {
       // asks the data
-      await this.notices.publishProfileRequest(username)
+      await this.notices.publishProfileRequest([username])
 
       // wait timeout and return the data
       // wait 5 seconds
@@ -480,5 +481,25 @@ export default class Peer {
 
       return this.timeline.get(username)
     }
+  }
+
+  /**
+   * Gets the post of the users that this peer follows, after a given timeline.
+   *
+   * @param {number} timestamp the timestamp after which the posts are retrieved
+   * @returns {Post[]} the posts
+   */
+  async followingPosts(timestamp) {
+    const following = this.subscriptionManager.get()
+
+    await this.notices.publishProfileRequest(following, timestamp)
+
+    // wait timeout and return the data
+    // wait 5 seconds
+    await new Promise((resolve) =>
+      setTimeout(resolve, peerConfig.protocols.cache.PROFILE_REQUEST_TIMEOUT)
+    )
+
+    return this.timeline.getAll(timestamp)
   }
 }

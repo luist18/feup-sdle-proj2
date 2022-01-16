@@ -231,3 +231,15 @@ export function getPost(req, res) {
   }
   return res.status(rest.status.OK).json({ post: post.data })
 }
+
+export async function followingPosts(req, res) {
+  const peer = req.app.get('peer')
+
+  let { timestamp } = req.body
+  if (timestamp === undefined) {
+    timestamp = -1
+  }
+
+  const data = await peer.followingPosts(timestamp)
+  return res.status(rest.status.OK).json({ data })
+}

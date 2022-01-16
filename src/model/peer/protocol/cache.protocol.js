@@ -1,29 +1,22 @@
 import topics from '../../message/topics.js'
 
+import Protocol from './protocol.js'
 import { send, receive, trade } from '../communication/streaming.js'
 
-class CacheProtocol {
-  constructor(peer) {
-    this.peer = peer
-  }
-
+class CacheProtocol extends Protocol {
   register() {
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'add'),
       this._handleAdd.bind(this)
     )
-    this._subscribe(
+    super._subscribe(
       topics.topic(topics.prefix.CACHE, 'get'),
       this._handleGetFromUser.bind(this)
     )
-  }
-
-  _subscribe(protocol, handler) {
-    this.peer._libp2p().handle(protocol, ({ stream }) => {
-      // TODO: replace with debug
-      console.log(`Received protocol ${protocol}`)
-      handler(stream).bind(this)
-    })
+    super._subscribe(
+      topics.topic(topics.prefix.CACHE, 'send-to'),
+      this._handleSendTo.bind(this)
+    )
   }
 
   add(message) {
@@ -31,7 +24,7 @@ class CacheProtocol {
 
     const cachedMessage = messageBuilder.fromMessage(message)
 
-    console.log(JSON.stringify(cachedMessage))
+    console.log(cachedMessage)
 
     this.peer.neighbors().forEach((neighbor) => {
       console.log(`sending cache to ${neighbor}`)
@@ -73,6 +66,21 @@ class CacheProtocol {
     return cachedData.values()
   }
 
+  async sendTo(peerId, data) {
+    const messageBuilder = this.peer.messageBuilder
+
+    const cacheMessage = messageBuilder.buildCached(data)
+
+    try {
+      const { stream } = await this.peer
+        ._libp2p()
+        .dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
+      send(stream, cacheMessage)
+    } catch (err) {
+      console.log('failed to send cache to peer')
+    }
+  }
+
   async _handleAdd(stream) {
     const message = await receive(stream)
 
@@ -95,6 +103,26 @@ class CacheProtocol {
     const cacheMessage = this.peer.messageBuilder.buildCache(cached)
 
     send(stream, cacheMessage)
+  }
+
+  async _handleSendTo(stream) {
+    const message = await receive(stream)
+
+    const { data } = message
+
+    const map = new Map(Object.entries(data))
+
+    const posts = [...map.values()]
+
+    console.log('posts', posts)
+
+    const flattened = [].concat(...posts)
+
+    console.log('flattened', flattened)
+
+    flattened.forEach((post) => {
+      this.peer._storePost(post)
+    })
   }
 }
 

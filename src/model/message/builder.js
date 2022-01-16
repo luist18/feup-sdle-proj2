@@ -2,6 +2,9 @@ import Message from './index.js'
 import Post from './post.js'
 import Cached from './cached.js'
 import CacheRequest from './cacheRequest.js'
+import Profile from './profile.js'
+import ProfileRequest from './profileRequest.js'
+import * as signature from '../utils/signature.js'
 
 /**
  * Builds messages to send.
@@ -10,12 +13,13 @@ export default class MessageBuilder {
   /**
    * Messages have the username of the sender in its metadata.
    * In order to build a message, the username of the sender is required.
-   * This method sets the username of the sender, so that one does not have to be always passing it.
+   * In order to sign messages, the private key of the sender is required.
+   * Since the private key can change in the course of the program, a reference to the peer is used.
    *
-   * @param {string} username the own peer's username
+   * @param {Peer} peer the own peer
    */
-  constructor(username) {
-    this.username = username
+  constructor(peer) {
+    this.peer = peer
   }
 
   /**
@@ -23,42 +27,70 @@ export default class MessageBuilder {
    *
    * @param {object} data the data to send
    * @param {string} type the type of the message
+   * @param {boolean} sign whether to sign the message
    * @returns the message object
    */
-  build(data, type) {
-    return new Message(data, type, this.username, Date.now())
+  build(data, type = 'general-message', sign = false) {
+    const message = new Message(data, type, this.peer.username, Date.now())
+    if (sign) {
+      message.sign(this.peer.authManager.privateKey)
+    }
+    return message
   }
 
   /**
    * Messages that contribute to the timeline are special.
    * This builds them.
+   * Posts have to be always signed, so they are signed here.
    *
    * @param {string} content the message to include in the post
-   * @returns the Post message
+   * @returns {Post} the Post message
    */
   buildPost(content) {
-    return new Post(content, this.username, Date.now())
+    const post = new Post(content, this.peer.username, Date.now())
+    post.sign(this.peer.authManager.privateKey)
+    return post
   }
 
   /**
    * Messages that contain information cached in a peer.
    *
-   * @param {string} content the cached value
+   * @param {object} content the cached value
    * @returns the Cached message
    */
   buildCached(content) {
-    return new Cached(content, this.username, Date.now())
+    return new Cached(content, this.peer.username, Date.now())
   }
 
   /**
    * Messages that will ask peers for cached data.
    *
    * @param {string} user the owner of the cached data
-   * @param {Data} since the timestamp of the cached data
+   * @param {Date} since the timestamp of the cached data
    * @returns the CacheRequest message
    */
   buildCacheRequest(user, since) {
-    return new CacheRequest(user, since, this.username, Date.now())
+    return new CacheRequest(user, since, this.peer.username, Date.now())
+  }
+
+  /**
+   * Messages that will send a profile to a peer.
+   *
+   * @param {object} content the content of the profile
+   * @returns the Profile message
+   */
+  buildProfile(content) {
+    return new Profile(content, this.peer.username, Date.now())
+  }
+
+  /**
+   * Messages that will ask peers for cached data.
+   *
+   * @param {string} user the owner of the cached data
+   * @returns the ProfileRequest message
+   */
+  buildProfileRequest(user) {
+    return new ProfileRequest(user, this.peer.username, Date.now())
   }
 
   /**
@@ -72,14 +104,33 @@ export default class MessageBuilder {
    * @returns the new message
    */
   fromMessage(message) {
-    return new Message(
+    message.updateTimestamp()
+    message.updateUser(this.peer.username)
+    return message
+  }
+
+  /**
+   * Verifies if the message is signed by the owner.
+   *
+   * @param {Message} message the message to verify if it is signed
+   * @returns {boolean} whether the message is signed
+   */
+  isSigned(message) {
+    if (!message._metadata.signature) {
+      return false
+    }
+
+    const owner = message._metadata.owner
+    const key = this.peer.authManager.getKeyByUsername(owner)
+
+    if (!key) {
+      return false
+    }
+
+    return signature.verifyObject(
       message.data,
-      message._metadata.type,
-      message._metadata.owner,
-      message._metadata.ownerTimestamp,
-      this.username,
-      Date.now(),
-      message._metadata.id
+      message._metadata.signature,
+      key
     )
   }
 }

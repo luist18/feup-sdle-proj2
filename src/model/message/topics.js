@@ -3,7 +3,8 @@ const config = {
     NOTICE: 'notice',
     PROTOCOL: 'protocol',
     POST: 'post',
-    CACHE: 'cache'
+    CACHE: 'cache',
+    PROFILE: 'profile'
   },
 
   SEPARATOR: '/'

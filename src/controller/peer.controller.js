@@ -30,10 +30,10 @@ export async function start(req, res) {
   // TODO I think this could be refactored in the future
   if (!token) {
     // if the network is new, the user is also new, ignores the secret key
-    peer.authManager.createCredentials()
-    peer.authManager.createDatabase(username)
-
     await peer.start()
+
+    peer.authManager.createCredentials()
+    peer.authManager.createDatabase(username, peer.id().toB58String())
   } else {
     try {
       // tries to join the network with the token
@@ -189,13 +189,55 @@ export function cache(req, res) {
 export async function remove(req, res) {
   const peer = req.app.get('peer')
 
-  peer.authManager.delete(peer.username)
-  await peer.notices.publishDbDelete(
-    peer.username,
-    peer.authManager.getDatabaseId()
-  )
+  await peer.delete()
 
   peer.stop(2 * 1000)
 
   return res.status(rest.status.OK).json({ message: rest.message.peer.REMOVED })
+}
+
+export async function profile(req, res) {
+  const peer = req.app.get('peer')
+
+  const { username } = req.body
+
+  try {
+    const data = await peer.profile(username)
+
+    return res.status(rest.status.OK).json({ data })
+  } catch (err) {
+    return res.status(rest.status.BAD_REQUEST).json({ message: err.message })
+  }
+}
+
+export function getPost(req, res) {
+  const peer = req.app.get('peer')
+
+  const { id } = req.body
+
+  if (id === undefined) {
+    return res
+      .status(rest.status.BAD_REQUEST)
+      .json({ error: rest.message.body.missing('id') })
+  }
+
+  // gets the post from the timeline
+  const post = peer.timeline.getPost(id) || peer.postManager.get(id)
+
+  if (post === undefined) {
+    return res.status(rest.status.NO_CONTENT).send()
+  }
+  return res.status(rest.status.OK).json({ post: post.data })
+}
+
+export async function followingPosts(req, res) {
+  const peer = req.app.get('peer')
+
+  let { timestamp } = req.body
+  if (timestamp === undefined) {
+    timestamp = -1
+  }
+
+  const data = await peer.followingPosts(timestamp)
+  return res.status(rest.status.OK).json({ data })
 }

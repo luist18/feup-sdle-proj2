@@ -492,12 +492,6 @@ export default class Peer {
   async posts(timestamp) {
     const following = this.subscriptionManager.get()
 
-    following.forEach((username) => {
-      if (!this.subscriptionManager.has(username)) {
-        throw new Error(peerConfig.error.NOT_FOLLOWING_USER)
-      }
-    })
-
     await this.notices.publishProfileRequest(following, timestamp)
 
     // wait timeout and return the data

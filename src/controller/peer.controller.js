@@ -212,7 +212,7 @@ export async function profile(req, res) {
   }
 }
 
-export async function timeline(req, res) {
+export async function posts(req, res) {
   const peer = req.app.get('peer')
 
   let { timestamp } = req.body

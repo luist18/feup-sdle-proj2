@@ -68,7 +68,7 @@ export default class Peer {
     this.authProtocol = new AuthProtocol(this)
     this.cacheProtocol = new CacheProtocol(this)
     this.profileProtocol = new ProfileProtocol(this)
-    
+
     // Stores subs in 5 second interval, if changes occurred
     this.job = new cron.CronJob(
       '*/5 * * * * *',

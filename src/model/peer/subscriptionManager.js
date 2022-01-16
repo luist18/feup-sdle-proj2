@@ -1,6 +1,7 @@
 class SubscriptionManager {
   constructor() {
     this.following = []
+    this.changed = false
   }
 
   add(username) {
@@ -9,6 +10,7 @@ class SubscriptionManager {
     }
 
     this.following.push(username)
+    this.changed = true
     return true
   }
 
@@ -18,7 +20,20 @@ class SubscriptionManager {
     }
 
     this.following = this.following.filter((u) => u !== username)
+    this.changed = true
     return true
+  }
+
+  isChanged() {
+    return this.changed
+  }
+
+  backedUp() {
+    this.changed = false
+  }
+
+  clear() {
+    this.following = []
   }
 
   has(username) {

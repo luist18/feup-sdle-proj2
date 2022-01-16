@@ -212,6 +212,26 @@ export async function profile(req, res) {
   }
 }
 
+export function getPost(req, res) {
+  const peer = req.app.get('peer')
+
+  const { id } = req.body
+
+  if (id === undefined) {
+    return res
+      .status(rest.status.BAD_REQUEST)
+      .json({ error: rest.message.body.missing('id') })
+  }
+
+  // gets the post from the timeline
+  const post = peer.timeline.getPost(id) || peer.postManager.get(id)
+
+  if (post === undefined) {
+    return res.status(rest.status.NO_CONTENT).send()
+  }
+  return res.status(rest.status.OK).json({ post: post.data })
+}
+
 export async function followingPosts(req, res) {
   const peer = req.app.get('peer')
 

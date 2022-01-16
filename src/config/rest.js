@@ -15,6 +15,11 @@ export default {
     CREATED: 201,
 
     /**
+     * There is no content to send for this request, but the headers may be useful. The user agent may update its cached headers for this resource with the new ones.
+     */
+    NO_CONTENT: 204,
+
+    /**
      * The server could not understand the request due to invalid syntax.
      */
     BAD_REQUEST: 400,

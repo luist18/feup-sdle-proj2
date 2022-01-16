@@ -211,3 +211,15 @@ export async function profile(req, res) {
     return res.status(rest.status.BAD_REQUEST).json({ message: err.message })
   }
 }
+
+export async function followingPosts(req, res) {
+  const peer = req.app.get('peer')
+
+  let { timestamp } = req.body
+  if (timestamp === undefined) {
+    timestamp = -1
+  }
+
+  const data = await peer.followingPosts(timestamp)
+  return res.status(rest.status.OK).json({ data })
+}

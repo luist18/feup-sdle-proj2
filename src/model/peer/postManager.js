@@ -11,4 +11,8 @@ export default class PostManager {
   push(post) {
     this.posts.push(post)
   }
+
+  getAll(timestamp = -1) {
+    return this.posts.filter(post => post.data.timestamp > timestamp)
+  }
 }

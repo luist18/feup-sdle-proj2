@@ -55,7 +55,7 @@ export default class MessageBuilder {
   /**
    * Messages that contain information cached in a peer.
    *
-   * @param {string} content the cached value
+   * @param {object} content the cached value
    * @returns the Cached message
    */
   buildCached(content) {
@@ -76,11 +76,11 @@ export default class MessageBuilder {
   /**
    * Messages that will send a profile to a peer.
    *
-   * @param {Array} content the content of the profile
+   * @param {object} content the content of the profile
    * @returns the Profile message
    */
   buildProfile(content) {
-    return new Profile(content, this.username, Date.now())
+    return new Profile(content, this.peer.username, Date.now())
   }
 
   /**
@@ -90,7 +90,7 @@ export default class MessageBuilder {
    * @returns the ProfileRequest message
    */
   buildProfileRequest(user) {
-    return new ProfileRequest(user, this.username, Date.now())
+    return new ProfileRequest(user, this.peer.username, Date.now())
   }
 
   /**

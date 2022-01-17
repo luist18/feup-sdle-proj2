@@ -12,5 +12,8 @@ export default {
     cache: {
       PROFILE_REQUEST_TIMEOUT: 5 * SECOND
     }
+  },
+  path: {
+    JSONPATH: './metadata/'
   }
 }

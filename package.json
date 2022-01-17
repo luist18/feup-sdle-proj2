@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "node --experimental-json-modules index.js",
+    "start": "node index.js",
     "dev": "nodemon index.js",
     "lint": "eslint --fix --ext .js .",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit --silent"

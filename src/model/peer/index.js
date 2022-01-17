@@ -28,8 +28,6 @@ const PEER_STATUS = {
   OFFLINE: 'offline'
 }
 
-const jsonPath = './src/model/peer/metadata/'
-
 export default class Peer {
   /**
    * Enum representing the status of the peer.
@@ -49,7 +47,6 @@ export default class Peer {
     this.port = port
 
     this.libp2p = null
-    this.addedUser = false
 
     this.status = Peer.STATUS.OFFLINE
 
@@ -186,9 +183,17 @@ export default class Peer {
     // Imports peerId, if exists
     let peerID
     try {
-      peerID = await PeerId.createFromJSON(JSON.parse(readFileSync(`${jsonPath}${this.username}_id.json`)))
+      peerID = await PeerId.createFromJSON(JSON.parse(this.readBackup('id')))
     } catch (err) {
       console.log('Peer ID file not found.')
+    }
+
+    // Imports cache of followed users and itself, if exists
+    try {
+      const jsonData = this.readBackup('cache')
+      this.cache.fromJSON(jsonData)
+    } catch (err) {
+      console.log('Cache file not found.')
     }
 
     this.libp2p = await libp2p.create({
@@ -214,6 +219,8 @@ export default class Peer {
 
     await this._libp2p().start()
 
+    this.writeBackup('id', JSON.stringify(this.id()))
+
     this.status = Peer.STATUS.ONLINE
 
     // happens when peer is invited to the network
@@ -230,14 +237,6 @@ export default class Peer {
     this.notices.register()
 
     this.job.start()
-
-    // Imports cache of followed users and itself, if exists
-    try {
-      const jsonData = readFileSync(`${jsonPath}${this.username}_cache.json`)
-      this.cache.fromJSON(jsonData)
-    } catch (err) {
-      console.log('Cache file not found.')
-    }
 
     return true
   }
@@ -258,12 +257,6 @@ export default class Peer {
     }
 
     await this._libp2p().stop()
-
-    writeFileSync(
-      `${jsonPath}${this.username}_id.json`,
-      JSON.stringify(this.id()),
-      'utf8'
-    )
 
     this.job.stop()
 
@@ -550,24 +543,20 @@ export default class Peer {
   storeData() {
     if (this.subscriptionManager.isChanged()) {
       const subs = JSON.stringify(this.subscriptionManager.get())
-      writeFileSync(`${jsonPath}${this.username}_sub.json`, subs)
+      this.writeBackup('sub', subs)
       console.log('Backed up all users')
       this.subscriptionManager.backedUp()
     }
 
     if (this.cache.isChanged()) {
-      writeFileSync(
-        `${jsonPath}${this.username}_cache.json`,
-        this.cache.toJSON(),
-        'utf8'
-      )
+      this.writeBackup('cache', this.cache.toJSON())
       console.log('Backed up cache')
       this.cache.changed = false
     }
 
     if (this.postManager.isChanged()) {
       const posts = JSON.stringify(this.postManager.getAll())
-      writeFileSync(`${jsonPath}${this.username}_posts.json`, posts)
+      this.writeBackup('posts', posts)
       console.log('Backed up post managers')
       this.postManager.backedUp()
     }
@@ -579,10 +568,8 @@ export default class Peer {
    */
   async recoverSubscriptions() {
     try {
-      const followed = JSON.parse(
-        readFileSync(`${jsonPath}${this.username}_sub.json`)
-      )
-      followed.forEach(this.arg.bind(this))
+      const followed = JSON.parse(this.readBackup('sub'))
+      followed.forEach(async(user) => await this.subscribe(user))
     } catch (err) {
       console.log('Subscriptions file not found.')
     }
@@ -594,17 +581,11 @@ export default class Peer {
    */
   recoverOwnPosts() {
     try {
-      const ownPosts = JSON.parse(
-        readFileSync(`${jsonPath}${this.username}_posts.json`)
-      )
+      const ownPosts = JSON.parse(this.readBackup('posts'))
       ownPosts.forEach((post) => this.postManager.push(post))
     } catch (err) {
       console.log('Post file not found.')
     }
-  }
-
-  async arg(user) {
-    await this.subscribe(user)
   }
 
   /**
@@ -614,8 +595,16 @@ export default class Peer {
   createTimeline() {
     this.cache.posts.forEach((posts, user) => {
       if (this.subscriptionManager.has(user)) {
-        this.timeline.posts.set(user, posts.slice())
+        this.timeline.replace(user, posts.slice())
       }
     })
+  }
+
+  writeBackup(filename, data) {
+    writeFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`, data, 'utf8')
+  }
+
+  readBackup(filename) {
+    readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
   }
 }

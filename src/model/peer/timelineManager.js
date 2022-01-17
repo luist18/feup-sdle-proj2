@@ -104,20 +104,24 @@ export default class TimelineManager {
     return posts
   }
 
-  // gets the timestamp of the last post
+  /**
+   * Gets the last timestamp of the timeline.
+   *
+   * @returns {number} the highest timestamp of the posts
+   */
   getLastTimestamp() {
     const posts = this.getAll()
 
-    if (posts.length === 0) {
-      return -1
-    }
+    // gets the max timestamp
+    const maxTimestamp = posts.reduce((max, post) => {
+      if (post._metadata.ownerTimestamp > max) {
+        return post._metadata.ownerTimestamp
+      }
 
-    // orders the posts by timestamp
-    posts.sort(
-      (a, b) => a._metadata.ownerTimestamp - b._metadata.ownerTimestamp
-    )
+      return max
+    }, -1)
 
-    return posts[posts.length - 1]._metadata.ownerTimestamp
+    return maxTimestamp
   }
 
   /**

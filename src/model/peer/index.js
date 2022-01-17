@@ -234,8 +234,6 @@ export default class Peer {
     this._registerProtocols()
     this.notices.register()
 
-    // console.log("atao", this.followingPosts(this.timeline.getLastTimestamp()))
-
     this.job.start()
 
     return true
@@ -523,7 +521,7 @@ export default class Peer {
   }
 
   /**
-   * Gets the post of the users that this peer follows, after a given timeline.
+   * Gets the post of the users that this peer follows, after a given timestamp.
    *
    * @param {number} timestamp the timestamp after which the posts are retrieved
    * @returns {Post[]} the posts
@@ -531,6 +529,7 @@ export default class Peer {
   async followingPosts(timestamp) {
     const following = this.subscriptionManager.get()
 
+    console.log('debug', following)
     await this.notices.publishProfileRequest(following, timestamp)
 
     // wait timeout and return the data
@@ -547,6 +546,7 @@ export default class Peer {
    *
    */
   storeData() {
+    console.log("crono")
     if (this.subscriptionManager.isChanged()) {
       const subs = JSON.stringify(this.subscriptionManager.get())
       this.writeBackup('sub', subs)
@@ -575,7 +575,7 @@ export default class Peer {
   async recoverSubscriptions() {
     try {
       const followed = JSON.parse(this.readBackup('sub'))
-      followed.forEach(async (user) => await this.subscribe(user))
+      followed.forEach(async(user) => await this.subscribe(user))
     } catch (err) {
       console.log('Subscriptions file not found.')
     }
@@ -615,6 +615,6 @@ export default class Peer {
   }
 
   readBackup(filename) {
-    readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
+    return readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
   }
 }

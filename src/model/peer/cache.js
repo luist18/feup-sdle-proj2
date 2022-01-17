@@ -74,8 +74,8 @@ class Cache {
     const cached = new Map()
 
     owners.forEach((owner) => {
-      if (this.cache.has(owner)) {
-        const cachedPosts = this.cache.get(owner).filter((message) => message._metadata.ownerTimestamp > since)
+      if (this.posts.has(owner)) {
+        const cachedPosts = this.posts.get(owner).filter((message) => message._metadata.ownerTimestamp > since)
 
         cached.set(owner, cachedPosts)
       }
@@ -91,15 +91,15 @@ class Cache {
    * @returns {boolean} true if the user was deleted, false otherwise
    */
   deleteEntry(owner) {
-    if (!this.cache.has(owner)) {
+    if (!this.posts.has(owner)) {
       return false
     }
 
-    return this.cache.delete(owner)
+    return this.posts.delete(owner)
   }
 
   has(owner) {
-    return this.cache.has(owner)
+    return this.posts.has(owner)
   }
 }
 

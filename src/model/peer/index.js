@@ -6,7 +6,7 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync, writeFileSync, mkdir, existsSync, mkdirSync } from 'fs'
 import PeerId from 'peer-id'
 import cron from 'cron'
 import peerConfig from '../../config/peer.js'
@@ -65,6 +65,10 @@ export default class Peer {
     this.authProtocol = new AuthProtocol(this)
     this.cacheProtocol = new CacheProtocol(this)
     this.profileProtocol = new ProfileProtocol(this)
+
+    if (!existsSync('./metadata/')) {
+      mkdirSync('./metadata/')
+    }
 
     // Stores subs in 5 second interval, if changes occurred
     this.job = new cron.CronJob(

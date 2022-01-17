@@ -5,7 +5,7 @@ import config from '../../config/peer.js'
 /**
  * This class stores all posts from all other peers
  */
-export default class TimelineManager {
+export default class Timeline {
   constructor() {
     this.posts = new Map()
   }

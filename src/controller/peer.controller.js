@@ -180,6 +180,18 @@ export function database(req, res) {
   })
 }
 
+export function feed(req, res) {
+  const peer = req.app.get('peer')
+
+  const { pretty = false, ascending = false } = req.body
+
+  const feed = peer.feed(pretty, ascending)
+
+  return res.status(rest.status.OK).json({
+    feed
+  })
+}
+
 export function cache(req, res) {
   const peer = req.app.get('peer')
 

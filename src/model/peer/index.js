@@ -21,7 +21,7 @@ import AuthProtocol from './protocol/auth.protocol.js'
 import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
 import SubscriptionManager from './subscriptionManager.js'
-import TimelineManager from './timelineManager.js'
+import Timeline from './timeline.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -57,7 +57,7 @@ export default class Peer {
     this.authManager = new AuthManager()
     this.postManager = new PostManager()
     this.subscriptionManager = new SubscriptionManager(this)
-    this.timeline = new TimelineManager()
+    this.timeline = new Timeline()
     this.cache = new Cache()
 
     // protocols
@@ -531,6 +531,40 @@ export default class Peer {
 
       return this.timeline.get(username)
     }
+  }
+
+  /**
+   * Gets the feed of the user.
+   *
+   * @param {Boolean} pretty indicates if posts should be prettified in the response
+   * @param {Boolean} ascending indicates if feed should be sorting in ascending order
+   */
+  feed(pretty, ascending) {
+    const timeline = this.timeline.getAll()
+    const posts = this.postManager.getAll()
+
+    let feed = [...posts, ...timeline]
+
+    feed.sort((post1, post2) => {
+      const lhs = ascending ? post1 : post2
+      const rhs = ascending ? post2 : post1
+      return lhs._metadata.ownerTimestamp - rhs._metadata.ownerTimestamp
+    })
+
+    if (pretty === true) {
+      feed = feed.map(
+        (message) => {
+          return {
+            id: message._metadata.id,
+            user: message._metadata.owner,
+            text: message.data.content,
+            date: new Date(message._metadata.ownerTimestamp).toLocaleString()
+          }
+        }
+      )
+    }
+
+    return feed
   }
 
   /**

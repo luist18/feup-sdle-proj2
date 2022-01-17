@@ -9,10 +9,12 @@ import PeerId from 'peer-id'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import debug from 'debug'
+
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import MessageBuilder from '../message/builder.js'
-import Message from '../message/index.js'
+import Message, { messagedebuger } from '../message/index.js'
 import topics from '../message/topics.js'
 import Cache from './cache.js'
 import Notices from './notices.js'
@@ -22,6 +24,12 @@ import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
 import SubscriptionManager from './subscriptionManager.js'
 import Timeline from './timeline.js'
+
+export const peerdebugger = debug('tp2p:peer')
+export const subscribedebugger = debug('tp2p:subscribe')
+export const timelinedebugger = debug('tp2p:timeline')
+export const postsdebugger = debug('tp2p:posts')
+export const storagedebugger = debug('tp2p:storage')
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -81,6 +89,8 @@ export default class Peer {
       '0 * * * *',
       this.removeOldMessages.bind(this)
     )
+
+    peerdebugger('peer created')
   }
 
   /**
@@ -149,7 +159,7 @@ export default class Peer {
     const message = Message.fromJson(JSON.parse(raw))
 
     if (!this.messageBuilder.isSigned(message)) {
-      console.log(`Message by ${message._metadata.owner} is not signed`)
+      messagedebuger(`message with id ${message._metadata.id} from ${message._metadata.from} has no valid signature`)
       return
     }
 
@@ -196,7 +206,7 @@ export default class Peer {
     try {
       peerID = await PeerId.createFromJSON(JSON.parse(this.readBackup('id')))
     } catch (err) {
-      console.log('Peer ID file not found.')
+      storagedebugger('peer id file not found')
     }
 
     // Imports cache of followed users and itself, if exists
@@ -204,7 +214,7 @@ export default class Peer {
       const jsonData = this.readBackup('cache')
       this.cache.fromJSON(jsonData)
     } catch (err) {
-      console.log('Cache file not found.')
+      storagedebugger('cache file not found')
     }
 
     this.libp2p = await libp2p.create({
@@ -250,6 +260,7 @@ export default class Peer {
     this.storeJob.start()
     this.cacheJob.start()
 
+    peerdebugger('peer has now started')
     return true
   }
 
@@ -310,8 +321,6 @@ export default class Peer {
    * @returns a promise that resolves when the peer is logged in
    */
   async login(privateKey) {
-    // TODO verify with persistence if the credentials are valid
-
     // asks neighbors if the credentials are correct
     const { bestNeighbor: bestNeighborId, bestReply: credentialsCorrect } =
       await this.authProtocol.verifyAuth(this.username, privateKey)
@@ -319,11 +328,6 @@ export default class Peer {
     if (!credentialsCorrect) {
       return false
     }
-
-    // TODO additional measures (like ask to sign random string)
-
-    // TODO not get the database right away, but check persistence first
-    // and check the ID
 
     // gets the database from the neighbor
     const database = await this.authProtocol.database(bestNeighborId)
@@ -375,7 +379,7 @@ export default class Peer {
           this.authManager.getDatabaseId()
         )
       }, peerConfig.notices.FLOOD_DELAY)
-    ).catch((error) => console.log(error))
+    ).catch((_) => peerdebugger('error while publishing database'))
 
     // runs this 5s in the future
 
@@ -388,8 +392,7 @@ export default class Peer {
    * @returns {string} the token
    */
   token() {
-    // TODO make token
-    return `${this._libp2p().multiaddrs[0].toString()}/p2p/${this._libp2p().peerId.toB58String()}`
+    return this._libp2p().multiaddrs.map((multiaddr) => `${multiaddr.toString()}/p2p/${this._libp2p().peerId.toB58String()}`)
   }
 
   /**
@@ -443,7 +446,7 @@ export default class Peer {
 
     this.subscriptionManager.add(username)
 
-    console.log(`User ${this.username} followed user ${username}`)
+    subscribedebugger(`${this.username} subscribed to ${username}`)
     return true
   }
 
@@ -463,7 +466,7 @@ export default class Peer {
 
     this.timeline.deleteEntry(username)
 
-    console.log(`User ${this.username} unfollowed user ${username}`)
+    subscribedebugger(`${this.username} unsubscribed from ${username}`)
     return true
   }
 
@@ -477,7 +480,7 @@ export default class Peer {
 
     this.postManager.push(post)
 
-    console.log(`User ${this.username} published message ${content}`)
+    postsdebugger(`${this.username} posted: %O`, content)
   }
 
   /**
@@ -517,8 +520,6 @@ export default class Peer {
       const posts = message.data
 
       this.timeline.replace(username, posts)
-
-      console.log(posts)
 
       return this.timeline.get(username)
     } catch (err) {
@@ -597,20 +598,20 @@ export default class Peer {
     if (this.subscriptionManager.isChanged()) {
       const subs = JSON.stringify(this.subscriptionManager.get())
       this.writeBackup('sub', subs)
-      console.log('Backed up all users')
+      storagedebugger('backed up following list')
       this.subscriptionManager.backedUp()
     }
 
     if (this.cache.isChanged()) {
       this.writeBackup('cache', this.cache.toJSON())
-      console.log('Backed up cache')
+      storagedebugger('backed up cache')
       this.cache.changed = false
     }
 
     if (this.postManager.isChanged()) {
       const posts = JSON.stringify(this.postManager.getAll())
       this.writeBackup('posts', posts)
-      console.log('Backed up post managers')
+      storagedebugger('backed up posts')
       this.postManager.backedUp()
     }
   }
@@ -640,8 +641,7 @@ export default class Peer {
         }
       })
     } catch (err) {
-      console.log(err)
-      console.log('Subscriptions file not found.')
+      storagedebugger('failed to recover following list, subscriptions file is not found')
     }
   }
 
@@ -654,7 +654,7 @@ export default class Peer {
       const ownPosts = JSON.parse(this.readBackup('posts'))
       ownPosts.forEach((post) => this.postManager.push(post))
     } catch (err) {
-      console.log('Post file not found.')
+      storagedebugger('failed to recover own posts, posts file is not found')
     }
   }
 

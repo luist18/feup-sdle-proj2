@@ -40,11 +40,13 @@ describe('auth test', () => {
 
           const { token } = res.body
 
+          const inviteToken = token[0]
+
           Promise.all(
             apps.slice(1).map((app) =>
               request(app)
                 .put('/peer/start')
-                .send({ inviteToken: token })
+                .send({ inviteToken })
                 .then((res) => {
                   expect(res.statusCode).toBe(201)
                   expect(res.body).toHaveProperty('message')

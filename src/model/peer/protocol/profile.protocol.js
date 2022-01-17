@@ -1,6 +1,9 @@
+import debug from 'debug'
 import topics from '../../message/topics.js'
 import Protocol from './protocol.js'
 import { send, receive, trade } from '../communication/streaming.js'
+
+export const profiledebugger = debug('tp2p:protocol:profile')
 
 class ProfileProtocol extends Protocol {
   register() {
@@ -24,7 +27,8 @@ class ProfileProtocol extends Protocol {
     const { user } = message.data
 
     if (this.peer.username !== user) {
-      // todo: debug with warning or error
+      profiledebugger(`received profile request for ${user} but my username is ${this.peer.username}`)
+      return
     }
 
     const data = await this.peer.profile()

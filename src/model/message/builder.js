@@ -1,4 +1,4 @@
-import Message from './index.js'
+import Message, { messagedebuger } from './index.js'
 import Post from './post.js'
 import Cached from './cached.js'
 import CacheRequest from './cacheRequest.js'
@@ -117,18 +117,21 @@ export default class MessageBuilder {
    */
   isSigned(message) {
     if (!message._metadata.signature) {
+      messagedebuger(`message with id ${message._metadata.id} from ${message._metadata.from} is not signed`)
       return false
     }
 
     const owner = message._metadata.owner
 
     if (!this.peer.authManager.hasUsername(owner)) {
+      messagedebuger(`message with id ${message._metadata.id} from ${message._metadata.from} has no valid user`)
       return false
     }
 
     const key = this.peer.authManager.getKeyByUsername(owner)
 
     if (!key) {
+      messagedebuger(`message with id ${message._metadata.id} from ${message._metadata.from} has no valid user`)
       return false
     }
 

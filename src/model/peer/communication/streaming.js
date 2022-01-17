@@ -1,5 +1,8 @@
 import Message from '../../message/index.js'
 import pipe from 'it-pipe'
+import debug from 'debug'
+
+const communicationdebugger = debug('tp2p:communication')
 
 /**
  * Sends a Message to a stream.
@@ -11,7 +14,7 @@ import pipe from 'it-pipe'
 export async function send(stream, message) {
   return new Promise((resolve, reject) => {
     try {
-      console.log('sending message:', message)
+      communicationdebugger('sending message: %O', message)
       message.updateTimestamp()
       pipe([JSON.stringify(message)], stream).then(() => resolve())
     } catch (error) {
@@ -32,9 +35,9 @@ export async function receive(stream) {
       pipe(stream, async(source) => {
         for await (const chunk of source) {
           const json = JSON.parse(chunk)
-          console.log('received message:', json)
-
           const message = Message.fromJson(json)
+
+          communicationdebugger('received message: %O', message)
           resolve(message)
         }
 

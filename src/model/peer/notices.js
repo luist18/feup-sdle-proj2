@@ -1,10 +1,13 @@
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-import Message from '../message/index.js'
+import debug from 'debug'
+import Message, { messagedebuger } from '../message/index.js'
 import topics from '../message/topics.js'
 import peerConfig from '../../config/peer.js'
 // eslint-disable-next-line no-unused-vars
 import Peer from './index.js'
+
+const noticesdebugger = debug('tp2p:notices')
 
 // notices are messages that are sent to all the network
 export default class Notices {
@@ -36,11 +39,11 @@ export default class Notices {
     this.peer.libp2p.pubsub.on(channel, async(message) => {
       const json = JSON.parse(uint8ArrayToString(message.data))
       const parsedMessage = Message.fromJson(json)
-      console.log('channel', channel)
-      console.log('message', parsedMessage)
+      noticesdebugger(`received message on topic ${channel}: %O`, parsedMessage)
       const result = await handler(parsedMessage)
 
       if (result === true) {
+        noticesdebugger(`desseminating message on topic ${channel} after ${peerConfig.notices.FLOOD_DELAY}ms: %O`, parsedMessage)
         this._disseminateMessage(
           channel,
           message,
@@ -60,16 +63,14 @@ export default class Notices {
    */
   async _disseminateMessage(channel, message, delay) {
     // sends the message after delay
-    console.log(`disseminating to ${channel}: ${JSON.stringify(message.data)}`)
     setTimeout(() => {
       this.peer.libp2p.pubsub.publish(channel, message.data)
     }, delay)
   }
 
   async publish(channel, body, sign = false) {
-    // todo create a specific build for a notice
     const message = this.peer.messageBuilder.build(body, 'notice', sign)
-    console.log(`publishing to ${channel}: ${JSON.stringify(message)}`)
+    noticesdebugger(`publishing message on topic ${channel}: %O`, message)
     await this.peer.libp2p.pubsub.publish(
       channel,
       uint8ArrayFromString(JSON.stringify(message))
@@ -152,7 +153,7 @@ export default class Notices {
    */
   async _handleDatabaseDelete(message) {
     if (!this.peer.messageBuilder.isSigned(message)) {
-      console.log(`Message by ${message._metadata.owner} is not signed`)
+      messagedebuger(`message with id ${message._metadata.id} from ${message._metadata.from} has no valid signature`)
       return false
     }
 
@@ -213,8 +214,7 @@ export default class Notices {
 
       await this.peer.cacheProtocol.sendTo(requester, data)
     } catch (err) {
-      // TODO: log the error
-      console.log(err)
+      noticesdebugger('error while handling profile request: %O', err)
       return false
     }
 

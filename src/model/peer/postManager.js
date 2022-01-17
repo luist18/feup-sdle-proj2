@@ -1,5 +1,3 @@
-// TODO probably same class as the one that handles cache
-
 /**
  * Stores the sent posts.
  */

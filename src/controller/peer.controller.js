@@ -27,7 +27,6 @@ export async function start(req, res) {
     token = inviteToken
   }
 
-  // TODO I think this could be refactored in the future
   if (!token) {
     // if the network is new, the user is also new, ignores the secret key
     await peer.start()
@@ -103,8 +102,6 @@ export async function subscribe(req, res) {
       .json({ error: rest.message.body.missing('username') })
   }
 
-  // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
-
   try {
     if (!(await peer.subscribe(username))) {
       return res
@@ -130,8 +127,6 @@ export async function unsubscribe(req, res) {
       .status(rest.status.BAD_REQUEST)
       .json({ error: rest.message.body.missing('username') })
   }
-
-  // TODO: check if user is in the network (works if offline, doesn't work if inexistent)
 
   if (await peer.unsubscribe(username)) {
     return res

@@ -1,3 +1,7 @@
+import debug from 'debug'
+
+export const protocoldebuggger = debug('tp2p:protocol')
+
 class Protocol {
   constructor(peer) {
     this.peer = peer
@@ -9,8 +13,7 @@ class Protocol {
 
   _subscribe(protocol, handler) {
     this.peer._libp2p().handle(protocol, ({ stream }) => {
-      // TODO: replace with debug
-      console.log(`Received protocol ${protocol}`)
+      protocoldebuggger(`received message on protocol ${protocol}`)
       handler(stream).bind(this)
     })
   }

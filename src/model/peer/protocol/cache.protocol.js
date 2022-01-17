@@ -1,7 +1,9 @@
+import debug from 'debug'
 import topics from '../../message/topics.js'
-
-import Protocol from './protocol.js'
 import { send, receive, trade } from '../communication/streaming.js'
+import Protocol from './protocol.js'
+
+export const cachedebugger = debug('tp2p:cache')
 
 class CacheProtocol extends Protocol {
   register() {
@@ -24,10 +26,8 @@ class CacheProtocol extends Protocol {
 
     const cachedMessage = messageBuilder.fromMessage(message)
 
-    console.log(cachedMessage)
-
     this.peer.neighbors().forEach((neighbor) => {
-      console.log(`sending cache to ${neighbor}`)
+      cachedebugger(`sending cached message to ${neighbor.toB58String()}`)
 
       this.peer
         ._libp2p()
@@ -77,14 +77,12 @@ class CacheProtocol extends Protocol {
         .dialProtocol(peerId, topics.topic(topics.prefix.CACHE, 'send-to'))
       send(stream, cacheMessage)
     } catch (err) {
-      console.log('failed to send cache to peer')
+      cachedebugger(`failed to send cached message to ${peerId.toB58String()}`)
     }
   }
 
   async _handleAdd(stream) {
     const message = await receive(stream)
-
-    console.log(message)
 
     const { owner } = message._metadata
 
@@ -114,11 +112,7 @@ class CacheProtocol extends Protocol {
 
     const posts = [...map.values()]
 
-    console.log('posts', posts)
-
     const flattened = [].concat(...posts)
-
-    console.log('flattened', flattened)
 
     flattened.forEach((post) => {
       this.peer._storePost(post)

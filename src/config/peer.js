@@ -13,6 +13,9 @@ export default {
       PROFILE_REQUEST_TIMEOUT: 5 * SECOND
     }
   },
+  notices: {
+    FLOOD_DELAY: 5 * SECOND
+  },
   path: {
     JSONPATH: './metadata/'
   },

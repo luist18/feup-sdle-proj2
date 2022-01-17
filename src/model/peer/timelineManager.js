@@ -99,4 +99,13 @@ export default class TimelineManager {
       .reduce((acc, userPosts) => acc.concat(userPosts), [])
       .filter((post) => post._metadata.ownerTimestamp > timestamp)
   }
+
+  /**
+   * Creates string containing the JSON of the timeline posts
+   *
+   * @param {string} json string of the timeline
+   */
+  fromJSON(json) {
+    this.posts = new Map(Object.entries(JSON.parse(json)))
+  }
 }

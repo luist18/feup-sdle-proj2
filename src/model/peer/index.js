@@ -6,7 +6,9 @@ import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-
+import { readFileSync, writeFileSync } from 'fs'
+import PeerId from 'peer-id'
+import cron from 'cron'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import Message from '../message/index.js'
@@ -63,6 +65,12 @@ export default class Peer {
     this.authProtocol = new AuthProtocol(this)
     this.cacheProtocol = new CacheProtocol(this)
     this.profileProtocol = new ProfileProtocol(this)
+
+    // Stores subs in 5 second interval, if changes occurred
+    this.job = new cron.CronJob(
+      '*/5 * * * * *',
+      this.storeData.bind(this)
+    )
   }
 
   /**
@@ -172,6 +180,22 @@ export default class Peer {
       return false
     }
 
+    // Imports peerId, if exists
+    let peerID
+    try {
+      peerID = await PeerId.createFromJSON(JSON.parse(this.readBackup('id')))
+    } catch (err) {
+      console.log('Peer ID file not found.')
+    }
+
+    // Imports cache of followed users and itself, if exists
+    try {
+      const jsonData = this.readBackup('cache')
+      this.cache.fromJSON(jsonData)
+    } catch (err) {
+      console.log('Cache file not found.')
+    }
+
     this.libp2p = await libp2p.create({
       addresses: {
         listen: ['/ip4/0.0.0.0/tcp/0']
@@ -184,6 +208,7 @@ export default class Peer {
         // we add the DHT module that will enable Peer and Content Routing
         dht: kadDHT
       },
+      peerId: peerID,
       config: {
         dht: {
           // dht must be enabled
@@ -193,6 +218,8 @@ export default class Peer {
     })
 
     await this._libp2p().start()
+
+    this.writeBackup('id', JSON.stringify(this.id()))
 
     this.status = Peer.STATUS.ONLINE
 
@@ -208,6 +235,8 @@ export default class Peer {
 
     this._registerProtocols()
     this.notices.register()
+
+    this.job.start()
 
     return true
   }
@@ -228,6 +257,10 @@ export default class Peer {
     }
 
     await this._libp2p().stop()
+
+    this.job.stop()
+
+    this.subscriptionManager.clear()
 
     this.status = Peer.STATUS.OFFLINE
 
@@ -501,5 +534,77 @@ export default class Peer {
     )
 
     return this.timeline.getAll(timestamp)
+  }
+
+  /**
+   * Stores the current peer subscriptions in a metadata file.
+   *
+   */
+  storeData() {
+    if (this.subscriptionManager.isChanged()) {
+      const subs = JSON.stringify(this.subscriptionManager.get())
+      this.writeBackup('sub', subs)
+      console.log('Backed up all users')
+      this.subscriptionManager.backedUp()
+    }
+
+    if (this.cache.isChanged()) {
+      this.writeBackup('cache', this.cache.toJSON())
+      console.log('Backed up cache')
+      this.cache.changed = false
+    }
+
+    if (this.postManager.isChanged()) {
+      const posts = JSON.stringify(this.postManager.getAll())
+      this.writeBackup('posts', posts)
+      console.log('Backed up post managers')
+      this.postManager.backedUp()
+    }
+  }
+
+  /**
+   * Recovers the current peer subscriptions from metadata file.
+   *
+   */
+  async recoverSubscriptions() {
+    try {
+      const followed = JSON.parse(this.readBackup('sub'))
+      followed.forEach(async(user) => await this.subscribe(user))
+    } catch (err) {
+      console.log('Subscriptions file not found.')
+    }
+  }
+
+  /**
+   * Recovers the previous posts sent by the peer.
+   *
+   */
+  recoverOwnPosts() {
+    try {
+      const ownPosts = JSON.parse(this.readBackup('posts'))
+      ownPosts.forEach((post) => this.postManager.push(post))
+    } catch (err) {
+      console.log('Post file not found.')
+    }
+  }
+
+  /**
+   * Creates timeline from cache
+   *
+   */
+  createTimeline() {
+    this.cache.posts.forEach((posts, user) => {
+      if (this.subscriptionManager.has(user)) {
+        this.timeline.replace(user, posts.slice())
+      }
+    })
+  }
+
+  writeBackup(filename, data) {
+    writeFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`, data, 'utf8')
+  }
+
+  readBackup(filename) {
+    readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
   }
 }

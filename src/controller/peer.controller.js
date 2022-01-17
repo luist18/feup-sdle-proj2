@@ -35,16 +35,11 @@ export async function start(req, res) {
     peer.authManager.createCredentials()
     peer.authManager.createDatabase(username, peer.id().toB58String())
   } else {
-    let started = false
     try {
       // tries to join the network with the token
-      started = await peer.start(token)
+      await peer.start(token)
     } catch (err) {
       // peer.start raises exception if the token is invalid
-      started = false
-    }
-
-    if (!started) {
       return res
         .status(rest.status.BAD_REQUEST)
         .json({ message: rest.message.token.INVALID })
@@ -67,6 +62,9 @@ export async function start(req, res) {
       }
     }
   }
+
+  await peer.recoverSubscriptions()
+  peer.createTimeline()
 
   return res.status(rest.status.CREATED).json({
     message: rest.message.peer.STARTED,
@@ -184,7 +182,7 @@ export function cache(req, res) {
   const peer = req.app.get('peer')
 
   return res.status(rest.status.OK).json({
-    cache: Object.fromEntries(peer.cache.cache)
+    cache: Object.fromEntries(peer.cache.posts)
   })
 }
 

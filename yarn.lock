@@ -3821,6 +3821,16 @@
     "protobufjs" "^6.11.2"
     "uint8arrays" "^3.0.0"
 
+"libp2p-floodsub@^0.29.0":
+  "integrity" "sha512-EcTTMJjryK1jUeSmBAa0hUYuEeMwvdtVyPFt+ImdQxNFWnDdVGTVQkn+5WOLESXlZS5Qj6vnXHpOaTc1FRv4Fw=="
+  "resolved" "https://registry.npmjs.org/libp2p-floodsub/-/libp2p-floodsub-0.29.0.tgz"
+  "version" "0.29.0"
+  dependencies:
+    "debug" "^4.2.0"
+    "libp2p-interfaces" "^4.0.2"
+    "time-cache" "^0.3.0"
+    "uint8arrays" "^3.0.0"
+
 "libp2p-gossipsub@^0.12.1":
   "integrity" "sha512-b7puc8cH0vQAikqPjuybsJBtZJzle5wH9TTTsn5i8t3vsQykv4so8k/4VKnCskwGSWOBNPo2Df3dO6InIYY0GA=="
   "resolved" "https://registry.npmjs.org/libp2p-gossipsub/-/libp2p-gossipsub-0.12.1.tgz"
@@ -3843,6 +3853,25 @@
   "version" "2.0.7"
   dependencies:
     "abort-controller" "^3.0.0"
+    "abortable-iterator" "^3.0.0"
+    "debug" "^4.3.1"
+    "err-code" "^3.0.1"
+    "it-length-prefixed" "^5.0.2"
+    "it-pipe" "^1.1.0"
+    "it-pushable" "^1.4.2"
+    "libp2p-crypto" "^0.21.0"
+    "multiaddr" "^10.0.0"
+    "multiformats" "^9.1.2"
+    "p-queue" "^6.6.2"
+    "peer-id" "^0.16.0"
+    "protobufjs" "^6.10.2"
+    "uint8arrays" "^3.0.0"
+
+"libp2p-interfaces@^4.0.2":
+  "integrity" "sha512-3KjzNEIWhi+VoOamLvgKKUE/xqwxSw/JYqsBnfMhAWVRvRtosROtVT03wci2XbuuowCYw+/hEX1xKJIR1w5n0A=="
+  "resolved" "https://registry.npmjs.org/libp2p-interfaces/-/libp2p-interfaces-4.0.6.tgz"
+  "version" "4.0.6"
+  dependencies:
     "abortable-iterator" "^3.0.0"
     "debug" "^4.3.1"
     "err-code" "^3.0.1"

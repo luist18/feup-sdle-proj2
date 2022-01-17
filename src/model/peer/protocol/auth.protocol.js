@@ -52,6 +52,26 @@ class AuthProtocol extends Protocol {
     return { bestNeighbor, bestReply }
   }
 
+  async neighborsDatabase() {
+    const neighbors = this.peer.neighbors()
+
+    const databases = await Promise.all(neighbors.map(neighbor => this.database(neighbor)))
+
+    // gets the database with the highest id
+    const bestDatabase = databases.reduce((best, database) => {
+      if (database.id > best.id) {
+        return database
+      }
+      return best
+    }, new Database(-1))
+
+    if (bestDatabase.id === -1) {
+      return undefined
+    }
+
+    return bestDatabase
+  }
+
   async database(peerId) {
     const messageBuilder = this.peer.messageBuilder
 

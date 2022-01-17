@@ -121,6 +121,11 @@ export default class MessageBuilder {
     }
 
     const owner = message._metadata.owner
+
+    if (!this.peer.authManager.hasUsername(owner)) {
+      return false
+    }
+
     const key = this.peer.authManager.getKeyByUsername(owner)
 
     if (!key) {

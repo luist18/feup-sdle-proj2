@@ -71,13 +71,13 @@ export default class Peer {
     }
 
     // Stores subs in 5 second interval, if changes occurred
-    this.job = new cron.CronJob(
+    this.storeJob = new cron.CronJob(
       '*/5 * * * * *',
       this.storeData.bind(this)
     )
 
     // Removes old messages from cache and timeline every hour
-    this.job = new cron.CronJob(
+    this.cacheJob = new cron.CronJob(
       '0 * * * *',
       this.removeOldMessages.bind(this)
     )
@@ -247,7 +247,8 @@ export default class Peer {
     this._registerProtocols()
     this.notices.register()
 
-    this.job.start()
+    this.storeJob.start()
+    this.cacheJob.start()
 
     return true
   }
@@ -269,7 +270,8 @@ export default class Peer {
 
     await this._libp2p().stop()
 
-    this.job.stop()
+    this.storeJob.stop()
+    this.cacheJob.stop()
 
     this.subscriptionManager.clear()
 
@@ -459,7 +461,7 @@ export default class Peer {
 
     this._libp2p().pubsub.unsubscribe(username)
 
-    this.timeline.deleteAllFrom(username)
+    this.timeline.deleteEntry(username)
 
     console.log(`User ${this.username} unfollowed user ${username}`)
     return true
@@ -629,8 +631,16 @@ export default class Peer {
   async recoverSubscriptions() {
     try {
       const followed = JSON.parse(this.readBackup('sub'))
-      followed.forEach(async(user) => await this.subscribe(user))
+      followed.forEach(async(user) => {
+        if (!this.authManager.hasUsername(user)) {
+          this.cache.deleteEntry(user)
+          this.timeline.deleteEntry(user)
+        } else {
+          await this.subscribe(user)
+        }
+      })
     } catch (err) {
+      console.log(err)
       console.log('Subscriptions file not found.')
     }
   }

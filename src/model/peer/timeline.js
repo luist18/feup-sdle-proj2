@@ -77,7 +77,7 @@ export default class Timeline {
    * @param {string} username the username
    * @returns {boolean} whether the posts were removed or not
    */
-  deleteAllFrom(username) {
+  deleteEntry(username) {
     if (!this.posts.has(username)) {
       return false
     }

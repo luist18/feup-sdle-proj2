@@ -126,14 +126,16 @@ export default class Notices {
    * @param {Message} message the received message
    * @returns {boolean} true if the notice changed the database
    */
-  _handleDatabasePost(message) {
-    // TODO accept IDs that are not the one exactly above
-    //     if it is even higher, question about the updated database
-    //     if it is lower, do something as well
-
+  async _handleDatabasePost(message) {
     const { username, publicKey, databaseId, peerId } = message.data
 
-    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
+    if (databaseId > this.peer.authManager.getDatabaseId() + 1) {
+      const database = await this.peer.authProtocol.neighborsDatabase()
+      this.peer.authManager.setDatabase(database)
+      return true
+    }
+
+    if (databaseId < this.peer.authManager.getDatabaseId()) {
       return false
     }
 
@@ -149,10 +151,6 @@ export default class Notices {
    * @returns {boolean} true if the notice changed the database
    */
   async _handleDatabaseDelete(message) {
-    // TODO accept IDs that are not the one exactly above
-    //     if it is even higher, question about the updated database
-    //     if it is lower, do something as well
-
     if (!this.peer.messageBuilder.isSigned(message)) {
       console.log(`Message by ${message._metadata.owner} is not signed`)
       return false
@@ -160,7 +158,13 @@ export default class Notices {
 
     const { username, databaseId } = message.data
 
-    if (databaseId !== this.peer.authManager.getDatabaseId() + 1) {
+    if (databaseId > this.peer.authManager.getDatabaseId() + 1) {
+      const database = await this.peer.authProtocol.neighborsDatabase()
+      this.peer.authManager.setDatabase(database)
+      return true
+    }
+
+    if (databaseId < this.peer.authManager.getDatabaseId()) {
       return false
     }
 

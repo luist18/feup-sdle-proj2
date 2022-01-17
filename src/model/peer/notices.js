@@ -60,6 +60,7 @@ export default class Notices {
    */
   async _disseminateMessage(channel, message, delay) {
     // sends the message after delay
+    console.log(`disseminating to ${channel}: ${JSON.stringify(message.data)}`)
     setTimeout(() => {
       this.peer.libp2p.pubsub.publish(channel, message.data)
     }, delay)

@@ -38,7 +38,7 @@ class AuthProtocol extends Protocol {
           topics.topic(topics.prefix.PROTOCOL, 'has-username')
         )
 
-      const message = messageBuilder.build({ username })
+      const message = messageBuilder.build({ username }, 'has-username')
       const response = await trade(stream, message)
       const { databaseId, usernameExists } = response.data
 
@@ -59,7 +59,7 @@ class AuthProtocol extends Protocol {
       ._libp2p()
       .dialProtocol(peerId, topics.topic(topics.prefix.PROTOCOL, 'database'))
 
-    const message = messageBuilder.build({})
+    const message = messageBuilder.build({}, 'database')
 
     const response = await trade(stream, message)
 
@@ -93,7 +93,10 @@ class AuthProtocol extends Protocol {
           topics.topic(topics.prefix.PROTOCOL, 'verify-auth')
         )
 
-      const message = messageBuilder.build({ username, signature })
+      const message = messageBuilder.build(
+        { username, signature },
+        'verify-auth'
+      )
       const response = await trade(stream, message)
       const { databaseId, credentialsCorrect } = response.data
 
@@ -117,7 +120,10 @@ class AuthProtocol extends Protocol {
     const usernameExists = this.peer.authManager.hasUsername(username)
     const databaseId = this.peer.authManager.getDatabaseId()
 
-    const reply = messageBuilder.build({ usernameExists, databaseId })
+    const reply = messageBuilder.build(
+      { usernameExists, databaseId },
+      'has-username-reply'
+    )
 
     send(stream, reply)
   }
@@ -125,10 +131,13 @@ class AuthProtocol extends Protocol {
   async _handleDatabase(stream) {
     const messageBuilder = this.peer.messageBuilder
 
-    const message = messageBuilder.build({
-      entries: this.peer.authManager.getDatabaseEntries(),
-      id: this.peer.authManager.getDatabaseId()
-    })
+    const message = messageBuilder.build(
+      {
+        entries: this.peer.authManager.getDatabaseEntries(),
+        id: this.peer.authManager.getDatabaseId()
+      },
+      'database-reply'
+    )
 
     await send(stream, message)
   }
@@ -144,14 +153,20 @@ class AuthProtocol extends Protocol {
     const databaseId = this.peer.authManager.getDatabaseId()
 
     if (!userPublicKey) {
-      const reply = messageBuilder.build({ credentialsCorrect: false, databaseId })
+      const reply = messageBuilder.build(
+        { credentialsCorrect: false, databaseId },
+        'verify-auth-reply'
+      )
       send(stream, reply)
       return
     }
 
     const credentialsCorrect = verify(username, signature, userPublicKey)
 
-    const reply = messageBuilder.build({ credentialsCorrect, databaseId })
+    const reply = messageBuilder.build(
+      { credentialsCorrect, databaseId },
+      'verify-auth-reply'
+    )
 
     send(stream, reply)
   }

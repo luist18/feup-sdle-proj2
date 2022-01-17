@@ -1,27 +1,27 @@
 import { NOISE } from '@chainsafe/libp2p-noise'
+import cron from 'cron'
+import { readFileSync, writeFileSync } from 'fs'
 import libp2p from 'libp2p'
 import Gossipsub from 'libp2p-gossipsub'
 import kadDHT from 'libp2p-kad-dht'
 import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
+import PeerId from 'peer-id'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-import { readFileSync, writeFileSync } from 'fs'
-import PeerId from 'peer-id'
-import cron from 'cron'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
+import MessageBuilder from '../message/builder.js'
 import Message from '../message/index.js'
 import topics from '../message/topics.js'
-import MessageBuilder from '../message/builder.js'
-import TimelineManager from './timelineManager.js'
+import Cache from './cache.js'
+import Notices from './notices.js'
+import PostManager from './postManager.js'
+import AuthProtocol from './protocol/auth.protocol.js'
 import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
-import AuthProtocol from './protocol/auth.protocol.js'
-import Notices from './notices.js'
-import Cache from './cache.js'
-import PostManager from './postManager.js'
 import SubscriptionManager from './subscriptionManager.js'
+import TimelineManager from './timelineManager.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -176,6 +176,7 @@ export default class Peer {
    * @returns {Promise<boolean>} a promise that resolves when the peer is online
    */
   async start(multiaddr) {
+    // TODO this function is too big
     if (this.isOnline()) {
       return false
     }
@@ -235,6 +236,8 @@ export default class Peer {
 
     this._registerProtocols()
     this.notices.register()
+
+    // console.log("atao", this.followingPosts(this.timeline.getLastTimestamp()))
 
     this.job.start()
 

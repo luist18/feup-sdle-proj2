@@ -95,9 +95,29 @@ export default class TimelineManager {
    * @returns {Post[]} the posts
    */
   getAll(timestamp = -1) {
-    return Array.from(this.posts.values())
-      .reduce((acc, userPosts) => acc.concat(userPosts), [])
-      .filter((post) => post._metadata.ownerTimestamp > timestamp)
+    const posts = []
+
+    for (const [, userPosts] of this.posts) {
+      posts.push(...userPosts.filter((post) => post._metadata.ownerTimestamp > timestamp))
+    }
+
+    return posts
+  }
+
+  // gets the timestamp of the last post
+  getLastTimestamp() {
+    const posts = this.getAll()
+
+    if (posts.length === 0) {
+      return -1
+    }
+
+    // orders the posts by timestamp
+    posts.sort(
+      (a, b) => a._metadata.ownerTimestamp - b._metadata.ownerTimestamp
+    )
+
+    return posts[posts.length - 1]._metadata.ownerTimestamp
   }
 
   /**

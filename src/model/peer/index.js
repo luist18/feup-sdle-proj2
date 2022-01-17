@@ -1,6 +1,5 @@
 import { NOISE } from '@chainsafe/libp2p-noise'
 import cron from 'cron'
-import { readFileSync, writeFileSync } from 'fs'
 import libp2p from 'libp2p'
 import Gossipsub from 'libp2p-gossipsub'
 import kadDHT from 'libp2p-kad-dht'
@@ -9,6 +8,7 @@ import TCP from 'libp2p-tcp'
 import PeerId from 'peer-id'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
 import MessageBuilder from '../message/builder.js'
@@ -65,6 +65,10 @@ export default class Peer {
     this.authProtocol = new AuthProtocol(this)
     this.cacheProtocol = new CacheProtocol(this)
     this.profileProtocol = new ProfileProtocol(this)
+
+    if (!existsSync('./metadata/')) {
+      mkdirSync('./metadata/')
+    }
 
     // Stores subs in 5 second interval, if changes occurred
     this.job = new cron.CronJob('*/5 * * * * *', this.storeData.bind(this))
@@ -529,7 +533,6 @@ export default class Peer {
   async followingPosts(timestamp) {
     const following = this.subscriptionManager.get()
 
-    console.log('debug', following)
     await this.notices.publishProfileRequest(following, timestamp)
 
     // wait timeout and return the data
@@ -546,7 +549,6 @@ export default class Peer {
    *
    */
   storeData() {
-    console.log("crono")
     if (this.subscriptionManager.isChanged()) {
       const subs = JSON.stringify(this.subscriptionManager.get())
       this.writeBackup('sub', subs)

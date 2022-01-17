@@ -107,8 +107,6 @@ export default class Notices {
       (current) => current !== this.peer.username
     )
 
-    console.log("debug 2", filteredUsernames.length)
-
     if (filteredUsernames.length === 0) {
       return
     }

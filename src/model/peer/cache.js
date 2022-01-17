@@ -1,7 +1,11 @@
+
+const MAX_MESSAGES = 5
+
 class Cache {
   constructor() {
     this.posts = new Map()
     this.changed = false
+    this.messageCount = 0
   }
 
   add(message) {
@@ -22,7 +26,29 @@ class Cache {
 
     cached.push(message)
     this.changed = true
+
+    this.verifyIfExceedsMax()
     return true
+  }
+
+  verifyIfExceedsMax() {
+    if (this.messageCount === MAX_MESSAGES) {
+      let maxLength = -1
+      let maxUser
+      for (const [user, posts] of this.posts.entries()) {
+        if (user.length > maxLength) {
+          maxLength = posts.length
+          maxUser = user
+        }
+      }
+      if (maxLength === 1) {
+        this.posts.delete(maxUser)
+      } else {
+        this.posts.get(maxUser).shift()
+      }
+    } else {
+      this.messageCount++
+    }
   }
 
   get(owner, since) {

@@ -108,3 +108,4 @@ dist
 
 # persistent data
 /metadata/
+clear_metadata.sh

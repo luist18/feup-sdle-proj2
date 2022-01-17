@@ -8,6 +8,7 @@ class Database {
   }
 
   has(username) {
+    console.log(this.entries)
     return this.entries[username] !== undefined
   }
 

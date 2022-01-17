@@ -66,6 +66,8 @@ export async function start(req, res) {
   await peer.recoverSubscriptions()
   peer.createTimeline()
 
+  peer.followingPosts(peer.timeline.getLastTimestamp())
+
   return res.status(rest.status.CREATED).json({
     message: rest.message.peer.STARTED,
     auth: {

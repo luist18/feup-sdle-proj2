@@ -1,27 +1,27 @@
 import { NOISE } from '@chainsafe/libp2p-noise'
+import cron from 'cron'
 import libp2p from 'libp2p'
 import Gossipsub from 'libp2p-gossipsub'
 import kadDHT from 'libp2p-kad-dht'
 import Mplex from 'libp2p-mplex'
 import TCP from 'libp2p-tcp'
+import PeerId from 'peer-id'
 import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import PeerId from 'peer-id'
-import cron from 'cron'
 import peerConfig from '../../config/peer.js'
 import AuthManager from '../auth/index.js'
+import MessageBuilder from '../message/builder.js'
 import Message from '../message/index.js'
 import topics from '../message/topics.js'
-import MessageBuilder from '../message/builder.js'
-import TimelineManager from './timelineManager.js'
+import Cache from './cache.js'
+import Notices from './notices.js'
+import PostManager from './postManager.js'
+import AuthProtocol from './protocol/auth.protocol.js'
 import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
-import AuthProtocol from './protocol/auth.protocol.js'
-import Notices from './notices.js'
-import Cache from './cache.js'
-import PostManager from './postManager.js'
 import SubscriptionManager from './subscriptionManager.js'
+import TimelineManager from './timelineManager.js'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -71,10 +71,7 @@ export default class Peer {
     }
 
     // Stores subs in 5 second interval, if changes occurred
-    this.job = new cron.CronJob(
-      '*/5 * * * * *',
-      this.storeData.bind(this)
-    )
+    this.job = new cron.CronJob('*/5 * * * * *', this.storeData.bind(this))
   }
 
   /**
@@ -180,6 +177,7 @@ export default class Peer {
    * @returns {Promise<boolean>} a promise that resolves when the peer is online
    */
   async start(multiaddr) {
+    // TODO this function is too big
     if (this.isOnline()) {
       return false
     }
@@ -345,7 +343,6 @@ export default class Peer {
 
     // creates the credentials
     this.authManager.createCredentials()
-    // TODO persistence
 
     // adds the user to the database
     database.set(
@@ -358,11 +355,18 @@ export default class Peer {
     this.authManager.setDatabase(database)
 
     // floods the new user to the network
-    this.notices.publishDatabasePost(
-      this.username,
-      this.authManager.publicKey,
-      this.authManager.getDatabaseId()
-    )
+    // runs this 5s in the future
+    new Promise((resolve, reject) =>
+      setTimeout(async() => {
+        this.notices.publishDatabasePost(
+          this.username,
+          this.authManager.publicKey,
+          this.authManager.getDatabaseId()
+        )
+      }, peerConfig.notices.FLOOD_DELAY)
+    ).catch((error) => console.log(error))
+
+    // runs this 5s in the future
 
     return true
   }
@@ -521,7 +525,7 @@ export default class Peer {
   }
 
   /**
-   * Gets the post of the users that this peer follows, after a given timeline.
+   * Gets the post of the users that this peer follows, after a given timestamp.
    *
    * @param {number} timestamp the timestamp after which the posts are retrieved
    * @returns {Post[]} the posts
@@ -605,10 +609,14 @@ export default class Peer {
   }
 
   writeBackup(filename, data) {
-    writeFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`, data, 'utf8')
+    writeFileSync(
+      `${peerConfig.path.JSONPATH}${this.username}_${filename}.json`,
+      data,
+      'utf8'
+    )
   }
 
   readBackup(filename) {
-    readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
+    return readFileSync(`${peerConfig.path.JSONPATH}${this.username}_${filename}.json`)
   }
 }

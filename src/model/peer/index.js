@@ -71,7 +71,16 @@ export default class Peer {
     }
 
     // Stores subs in 5 second interval, if changes occurred
-    this.job = new cron.CronJob('*/5 * * * * *', this.storeData.bind(this))
+    this.job = new cron.CronJob(
+      '*/5 * * * * *',
+      this.storeData.bind(this)
+    )
+
+    // Removes old messages from cache and timeline every hour
+    this.job = new cron.CronJob(
+      '0 * * * *',
+      this.removeOldMessages.bind(this)
+    )
   }
 
   /**
@@ -568,6 +577,15 @@ export default class Peer {
       console.log('Backed up post managers')
       this.postManager.backedUp()
     }
+  }
+
+  /**
+   * Removes the messages from the cache and timeline older than one hour.
+   *
+   */
+  removeOldMessages() {
+    this.timeline.removeOld()
+    this.cache.removeOld()
   }
 
   /**

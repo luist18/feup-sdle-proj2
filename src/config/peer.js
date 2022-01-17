@@ -18,5 +18,8 @@ export default {
   },
   path: {
     JSONPATH: './metadata/'
+  },
+  delay: {
+    removeRate: 10 * SECOND
   }
 }

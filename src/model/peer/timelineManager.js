@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import Message from '../message/index.js'
+import config from '../../config/peer.js'
 
 /**
  * This class stores all posts from all other peers
@@ -32,8 +33,14 @@ export default class TimelineManager {
     }
 
     userPosts.push(message)
-
     return true
+  }
+
+  removeOld() {
+    for (const [user, posts] of this.posts.entries()) {
+      const filtered = [...posts].filter((post) => post._metadata.ownerTimestamp >= Date.now() - config.delay.removeRate)
+      this.posts.set(user, filtered)
+    }
   }
 
   /**

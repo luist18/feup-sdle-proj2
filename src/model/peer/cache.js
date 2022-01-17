@@ -1,3 +1,5 @@
+import config from '../../config/peer.js'
+
 class Cache {
   constructor() {
     this.posts = new Map()
@@ -22,7 +24,20 @@ class Cache {
 
     cached.push(message)
     this.changed = true
+
     return true
+  }
+
+  removeOld() {
+    for (const [user, posts] of this.posts.entries()) {
+      const filtered = [...posts].filter((post) => post._metadata.ownerTimestamp >= Date.now() - config.delay.removeRate)
+
+      if (!this.changed) {
+        this.changed = posts.length !== filtered.length
+      }
+
+      this.posts.set(user, filtered)
+    }
   }
 
   get(owner, since) {

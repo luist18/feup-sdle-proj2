@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import Message from '../message/index.js'
-import config from '../../config/peer'
+import config from '../../config/peer.js'
 
 /**
  * This class stores all posts from all other peers

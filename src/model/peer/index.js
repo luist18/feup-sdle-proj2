@@ -78,7 +78,7 @@ export default class Peer {
 
     // Removes old messages from cache and timeline every hour
     this.job = new cron.CronJob(
-      '0 * * * *',
+      '*/10 * * * * *',
       this.removeOldMessages.bind(this)
     )
   }

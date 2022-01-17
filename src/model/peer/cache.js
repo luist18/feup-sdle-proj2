@@ -1,4 +1,4 @@
-import config from '../../config/peer'
+import config from '../../config/peer.js'
 
 class Cache {
   constructor() {

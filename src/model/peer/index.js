@@ -66,10 +66,16 @@ export default class Peer {
     this.cacheProtocol = new CacheProtocol(this)
     this.profileProtocol = new ProfileProtocol(this)
 
-    // Stores subs in 5 second interval, if changes occurred
+    // Stores subscriptions, posts and cache every 5 seconds, if changes occurred
     this.job = new cron.CronJob(
       '*/5 * * * * *',
       this.storeData.bind(this)
+    )
+
+    // Removes old messages from cache and timeline every hour
+    this.job = new cron.CronJob(
+      '*/5 * * * * *',
+      this.removeOldMessages.bind(this)
     )
   }
 
@@ -560,6 +566,15 @@ export default class Peer {
       console.log('Backed up post managers')
       this.postManager.backedUp()
     }
+  }
+
+  /**
+   * Removes the messages from the cache and timeline older than one hour.
+   *
+   */
+  removeOldMessages() {
+    this.timeline.removeOld()
+    this.cache.removeOld()
   }
 
   /**

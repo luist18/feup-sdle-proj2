@@ -1,15 +1,12 @@
 // eslint-disable-next-line no-unused-vars
 import Message from '../message/index.js'
 
-const MAX_MESSAGES = 5
-
 /**
  * This class stores all posts from all other peers
  */
 export default class TimelineManager {
   constructor() {
     this.posts = new Map()
-    this.messageCount = 0
   }
 
   /**
@@ -35,28 +32,18 @@ export default class TimelineManager {
     }
 
     userPosts.push(message)
-
-    this.verifyIfExceedsMax()
     return true
   }
 
-  verifyIfExceedsMax() {
-    if (this.messageCount === MAX_MESSAGES) {
-      let maxLength = -1
-      let maxUser
-      for (const [user, posts] of this.posts.entries()) {
-        if (user.length > maxLength) {
-          maxLength = posts.length
-          maxUser = user
+  removeOld() {
+    for (const [user, posts] of this.posts.entries()) {
+      while (posts[0]._metadata.ownerTimestamp < Date.now() - 3600000) {
+        posts.shift()
+        if (!posts.length) {
+          this.posts.delete(user)
+          break
         }
       }
-      if (maxLength === 1) {
-        this.posts.delete(maxUser)
-      } else {
-        this.posts.get(maxUser).shift()
-      }
-    } else {
-      this.messageCount++
     }
   }
 

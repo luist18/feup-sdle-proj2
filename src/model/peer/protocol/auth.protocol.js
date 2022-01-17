@@ -168,9 +168,18 @@ class AuthProtocol extends Protocol {
     const message = await receive(stream)
 
     const { username, signature } = message.data
+    const databaseId = this.peer.authManager.getDatabaseId()
+
+    if (!this.peer.authManager.hasUsername(username)) {
+      const reply = messageBuilder.build(
+        { credentialsCorrect: false, databaseId },
+        'verify-auth-reply'
+      )
+      send(stream, reply)
+      return
+    }
 
     const userPublicKey = this.peer.authManager.getKeyByUsername(username)
-    const databaseId = this.peer.authManager.getDatabaseId()
 
     if (!userPublicKey) {
       const reply = messageBuilder.build(

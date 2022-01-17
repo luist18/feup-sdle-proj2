@@ -17,49 +17,36 @@ export async function start(req, res) {
       .json({ message: rest.message.peer.ALREADY_ONLINE })
   }
 
-  const username = peer.username
-
   // TODO missing validation
-  let { inviteToken, token, privateKey } = req.body
+  const { privateKey } = req.body
 
-  // allow both inviteToken and token
-  if (!token) {
-    token = inviteToken
+  try {
+    // tries to join the network with the token
+    await peer.start()
+  } catch (err) {
+    return res
+      .status(rest.status.BAD_REQUEST)
+      .json({ message: rest.message.peer.CANT_START })
   }
 
-  // TODO I think this could be refactored in the future
-  if (!token) {
-    // if the network is new, the user is also new, ignores the secret key
-    await peer.start()
+  // waits one second
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    peer.authManager.createCredentials()
-    peer.authManager.createDatabase(username, peer.id().toB58String())
-  } else {
-    try {
-      // tries to join the network with the token
-      await peer.start(token)
-    } catch (err) {
-      // peer.start raises exception if the token is invalid
+  if (privateKey) {
+    console.log("es´ta a correr")
+    // if the user inserts its private key, then it is supposed to login
+    if (!(await peer.login(privateKey))) {
+      await peer.stop()
       return res
-        .status(rest.status.BAD_REQUEST)
-        .json({ message: rest.message.token.INVALID })
-    }
-
-    if (privateKey) {
-      // if the user inserts its private key, then it is supposed to login
-      if (!(await peer.login(privateKey))) {
-        await peer.stop()
-        return res
-          .status(rest.status.UNAUTHORIZED)
-          .json({ message: rest.message.credentials.INVALID })
-      } // if the credentials (username + pk) are incorrect
-    } else {
-      if (!(await peer.createCredentials())) {
-        await peer.stop()
-        return res
-          .status(rest.status.CONFLICT)
-          .json({ message: rest.message.username.ALREADY_EXISTS })
-      }
+        .status(rest.status.UNAUTHORIZED)
+        .json({ message: rest.message.credentials.INVALID })
+    } // if the credentials (username + pk) are incorrect
+  } else {
+    if (!(await peer.createCredentials())) {
+      await peer.stop()
+      return res
+        .status(rest.status.CONFLICT)
+        .json({ message: rest.message.username.ALREADY_EXISTS })
     }
   }
 

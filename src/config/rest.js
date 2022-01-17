@@ -42,7 +42,9 @@ export default {
       STARTED: 'Peer started',
       STOPPED: 'Peer stopped',
       OFFLINE: 'Peer is offline',
-      REMOVED: 'Username removed from network'
+      REMOVED: 'Username removed from network',
+      CANT_START: 'Peer can\'t start',
+      NEW_NETWORK: 'New network created'
     },
 
     token: {

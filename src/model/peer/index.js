@@ -22,6 +22,7 @@ import CacheProtocol from './protocol/cache.protocol.js'
 import ProfileProtocol from './protocol/profile.protocol.js'
 import SubscriptionManager from './subscriptionManager.js'
 import TimelineManager from './timelineManager.js'
+import MulticastDNS from 'libp2p-mdns'
 
 const PEER_STATUS = {
   ONLINE: 'online',
@@ -216,8 +217,8 @@ export default class Peer {
         streamMuxer: [Mplex],
         connEncryption: [NOISE],
         pubsub: Gossipsub,
-        // we add the DHT module that will enable Peer and Content Routing
-        dht: kadDHT
+        dht: kadDHT,
+        peerDiscovery: [MulticastDNS]
       },
       peerId: peerID,
       config: {
@@ -227,6 +228,8 @@ export default class Peer {
         }
       }
     })
+
+    this._libp2p().once('peer:discovery', this._joinNetwork.bind(this))
 
     await this._libp2p().start()
 
@@ -251,6 +254,11 @@ export default class Peer {
     this.cacheJob.start()
 
     return true
+  }
+
+  async _joinNetwork(peerId) {
+    await this.connect(peerId)
+    console.log(`Connected to ${peerId.toB58String()}`)
   }
 
   /**
@@ -343,6 +351,14 @@ export default class Peer {
    */
   async createCredentials() {
     // asks neighbors if the username already exists
+    const neighbors = this.neighbors()
+    if (neighbors.length === 0) {
+      console.log("fds")
+      this.authManager.createCredentials()
+      this.authManager.createDatabase(this.username, this.id().toB58String())
+      return true
+    }
+
     const { bestNeighbor: bestNeighborId, bestReply: usernameAlreadyExists } =
       await this.authProtocol.hasUsername(this.username)
     if (usernameAlreadyExists) {
@@ -389,7 +405,7 @@ export default class Peer {
    */
   token() {
     // TODO make token
-    return `${this._libp2p().multiaddrs[0].toString()}/p2p/${this._libp2p().peerId.toB58String()}`
+    return `${this._libp2p().multiaddrs[1].toString()}/p2p/${this._libp2p().peerId.toB58String()}`
   }
 
   /**
@@ -606,7 +622,6 @@ export default class Peer {
         }
       })
     } catch (err) {
-      console.log(err)
       console.log('Subscriptions file not found.')
     }
   }

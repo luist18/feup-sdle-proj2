@@ -24,6 +24,7 @@
     "libp2p-floodsub": "^0.29.0",
     "libp2p-gossipsub": "^0.12.1",
     "libp2p-kad-dht": "^0.27.5",
+    "libp2p-mdns": "^0.18.0",
     "libp2p-mplex": "^0.10.5",
     "libp2p-tcp": "^0.17.2",
     "morgan": "^1.10.0",

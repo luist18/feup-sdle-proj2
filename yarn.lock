@@ -293,20 +293,21 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@chainsafe/libp2p-noise@5.0.0":
-  version "5.0.0"
-  resolved "https://registry.npmjs.org/@chainsafe/libp2p-noise/-/libp2p-noise-5.0.0.tgz"
-  integrity sha512-N6kAESm0r/P4jvzt6UntRkdBsMNUigRcYykioccY3lDFFBLjPkKjw6eUwbfogBGwiTxJgfFQUj28e9xTH396PQ==
+"@chainsafe/libp2p-noise@5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-noise/-/libp2p-noise-5.0.3.tgz#d9fbdef7cb3fada7ba467e3495ca74a0710d6274"
+  integrity sha512-IT7q9JaEjv4aU3zO8zeomWyw79rLo8hGcmnyWOE1P/dVIT+jqrF08R3rVXonujBbmi6SSgZbB6NModqW+Oa2jw==
   dependencies:
     "@stablelib/chacha20poly1305" "^1.0.1"
     "@stablelib/hkdf" "^1.0.1"
     "@stablelib/sha256" "^1.0.1"
     "@stablelib/x25519" "^1.0.1"
+    bl "^5.0.0"
     debug "^4.3.1"
     it-buffer "^0.1.3"
     it-length-prefixed "^5.0.3"
     it-pair "^1.0.0"
-    it-pb-rpc "^0.1.11"
+    it-pb-rpc "^0.2.0"
     it-pipe "^1.1.0"
     peer-id "^0.16.0"
     protobufjs "^6.11.2"
@@ -1679,9 +1680,9 @@ debug@2.6.9, debug@^2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@4, debug@^4.0.1, debug@^4.1.0, debug@^4.1.1, debug@^4.2.0, debug@^4.3.0, debug@^4.3.1, debug@^4.3.2:
+debug@4, debug@^4.0.1, debug@^4.1.0, debug@^4.1.1, debug@^4.2.0, debug@^4.3.0, debug@^4.3.1, debug@^4.3.2, debug@^4.3.3:
   version "4.3.3"
-  resolved "https://registry.npmjs.org/debug/-/debug-4.3.3.tgz"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.3.tgz#04266e0b70a98d4462e6e288e38259213332b664"
   integrity sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==
   dependencies:
     ms "2.1.2"
@@ -1692,13 +1693,6 @@ debug@^3.2.7:
   integrity sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==
   dependencies:
     ms "^2.1.1"
-
-debug@^4.3.3:
-  version "4.3.3"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.3.tgz#04266e0b70a98d4462e6e288e38259213332b664"
-  integrity sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==
-  dependencies:
-    ms "2.1.2"
 
 decimal.js@^10.2.1:
   version "10.3.1"
@@ -2872,11 +2866,6 @@ is-boolean-object@^1.1.0:
     call-bind "^1.0.2"
     has-tostringtag "^1.0.0"
 
-is-buffer@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.npmjs.org/is-buffer/-/is-buffer-2.0.5.tgz"
-  integrity sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==
-
 is-callable@^1.1.4, is-callable@^1.2.4:
   version "1.2.4"
   resolved "https://registry.npmjs.org/is-callable/-/is-callable-1.2.4.tgz"
@@ -3178,14 +3167,13 @@ it-parallel@^2.0.1:
   dependencies:
     p-defer "^3.0.0"
 
-it-pb-rpc@^0.1.11:
-  version "0.1.13"
-  resolved "https://registry.npmjs.org/it-pb-rpc/-/it-pb-rpc-0.1.13.tgz"
-  integrity sha512-aZ4FNJsDgNepVVTmYXgXbQabIiOQyqYWUhdfovaHDcPSM5KjegwJihJEWMJjMyj+oLSKcZl0vmHgHxXWJ9/ufw==
+it-pb-rpc@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/it-pb-rpc/-/it-pb-rpc-0.2.0.tgz#9247489e73e4a7d382d63a74778c1c3308bd9297"
+  integrity sha512-Rojodsa6yxSTZDqVVF9HXKsISoHtlLNOL0P6b/7oCswiscbjCpt1IB78BxRDHpFL3tg8jFPMNDTP3v6ZjrMf9w==
   dependencies:
-    is-buffer "^2.0.5"
     it-handshake "^2.0.0"
-    it-length-prefixed "^5.0.2"
+    it-length-prefixed "^5.0.3"
 
 it-pipe@^1.0.1, it-pipe@^1.1.0:
   version "1.1.0"
